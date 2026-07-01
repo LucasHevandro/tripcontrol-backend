@@ -1,0 +1,256 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Usuário ────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  password  String
+  avatarUrl String?
+  language  String   @default("pt-BR")
+  currency  String   @default("BRL")
+  notifyEmail            Boolean @default(true)
+  notifyExpenseAlerts    Boolean @default(true)
+  notifyRoadmapReminders Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trips        TripParticipant[]
+  paidExpenses Expense[]
+  refreshTokens RefreshToken[]
+  sentInvites  Invite[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+// ─── Viagem ─────────────────────────────────────────────────────────────────
+
+enum TripStatus {
+  PLANNING
+  ONGOING
+  COMPLETED
+}
+
+enum TripType {
+  FRIENDS
+  COUPLE
+  FAMILY
+  WORK
+  TOUR
+  OTHER
+}
+
+enum DestinationType {
+  BEACH
+  CITY
+  COUNTRYSIDE
+  INTERNATIONAL
+}
+
+model Trip {
+  id              String          @id @default(uuid())
+  name            String
+  destination     String
+  destinationType DestinationType?
+  startDate       DateTime
+  endDate         DateTime
+  status          TripStatus      @default(PLANNING)
+  tripType        TripType?
+  budget          Decimal?        @db.Decimal(10, 2)
+  description     String?
+  emoji           String?
+  bannerColor     String?
+  inviteToken     String          @unique @default(uuid())
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  participants TripParticipant[]
+  expenses     Expense[]
+  activities   RoadmapActivity[]
+  reservations Reservation[]
+  invites      Invite[]
+
+  @@map("trips")
+}
+
+// ─── Participante ───────────────────────────────────────────────────────────
+
+enum ParticipantRole {
+  ORGANIZER
+  MEMBER
+}
+
+model TripParticipant {
+  id       String          @id @default(uuid())
+  tripId   String
+  userId   String
+  role     ParticipantRole @default(MEMBER)
+  joinedAt DateTime        @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expenseSplits ExpenseSplit[]
+
+  @@unique([tripId, userId])
+  @@map("trip_participants")
+}
+
+// ─── Convite ─────────────────────────────────────────────────────────────────
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+model Invite {
+  id         String       @id @default(uuid())
+  tripId     String
+  invitedBy  String
+  email      String?
+  token      String       @unique @default(uuid())
+  status     InviteStatus @default(PENDING)
+  expiresAt  DateTime
+  createdAt  DateTime     @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [invitedBy], references: [id])
+
+  @@map("invites")
+}
+
+// ─── Despesa ─────────────────────────────────────────────────────────────────
+
+enum SplitType {
+  EQUAL
+  CUSTOM
+}
+
+model Expense {
+  id          String     @id @default(uuid())
+  tripId      String
+  paidById    String
+  description String
+  amount      Decimal    @db.Decimal(10, 2)
+  date        DateTime
+  category    String
+  splitType   SplitType  @default(EQUAL)
+  receiptUrl  String?
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  trip     Trip              @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  paidBy   User              @relation(fields: [paidById], references: [id])
+  splits   ExpenseSplit[]
+
+  @@map("expenses")
+}
+
+model ExpenseSplit {
+  id              String @id @default(uuid())
+  expenseId       String
+  participantId   String
+  amount          Decimal @db.Decimal(10, 2)
+
+  expense     Expense         @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  participant TripParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([expenseId, participantId])
+  @@map("expense_splits")
+}
+
+// ─── Roteiro ──────────────────────────────────────────────────────────────────
+
+enum ActivityStatus {
+  UPCOMING
+  CURRENT
+  COMPLETED
+}
+
+enum CostType {
+  FREE
+  TOTAL
+  PER_PERSON
+}
+
+model RoadmapActivity {
+  id          String         @id @default(uuid())
+  tripId      String
+  emoji       String         @default("🎯")
+  title       String
+  date        DateTime
+  startTime   String
+  duration    String?
+  location    String?
+  costAmount  Decimal?       @db.Decimal(10, 2)
+  costType    CostType       @default(FREE)
+  note        String?
+  status      ActivityStatus @default(UPCOMING)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@map("roadmap_activities")
+}
+
+// ─── Reserva ──────────────────────────────────────────────────────────────────
+
+enum ReservationCategory {
+  HOTEL
+  FLIGHT
+  CAR
+  TOUR
+}
+
+enum ReservationStatus {
+  CONFIRMED
+  PENDING
+  CANCELLED
+}
+
+model Reservation {
+  id         String              @id @default(uuid())
+  tripId     String
+  paidById   String?
+  category   ReservationCategory
+  status     ReservationStatus   @default(PENDING)
+  title      String
+  subtitle   String?
+  amount     Decimal             @db.Decimal(10, 2)
+  notes      String?
+
+  // Campos específicos por categoria armazenados como JSON
+  // Evita criar 4 tabelas separadas pra campos que variam por tipo
+  details    Json?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@map("reservations")
+}
