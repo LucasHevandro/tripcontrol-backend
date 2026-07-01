@@ -18,50 +18,76 @@ export class ExpensesService {
     ) { }
 
     // ─── Listar despesas ──────────────────────────────────────────────────────
-
-    async findAll(userId: string, tripId: string, category?: string) {
+    async findAll(
+        userId: string,
+        tripId: string,
+        category?: string,
+        page: number = 1,
+        limit: number = 20,
+    ) {
         await this.tripsService.assertParticipant(userId, tripId);
 
-        const expenses = await this.prisma.expense.findMany({
-            where: {
-                tripId,
-                ...(category ? { category } : {}),
-            },
-            include: {
-                paidBy: { select: { id: true, name: true, avatarUrl: true } },
-                splits: {
-                    include: {
-                        participant: {
-                            include: {
-                                user: { select: { id: true, name: true } },
+        const skip = (Number(page) - 1) * Number(limit);
+        const take = Number(limit);
+
+        const [expenses, total] = await Promise.all([
+            this.prisma.expense.findMany({
+                where: {
+                    tripId,
+                    ...(category ? { category } : {}),
+                },
+                include: {
+                    paidBy: { select: { id: true, name: true, avatarUrl: true } },
+                    splits: {
+                        include: {
+                            participant: {
+                                include: {
+                                    user: { select: { id: true, name: true } },
+                                },
                             },
                         },
                     },
                 },
-            },
-            orderBy: { date: 'desc' },
-        });
-
-        return expenses.map((e) => ({
-            id: e.id,
-            description: e.description,
-            category: e.category,
-            amount: Number(e.amount),
-            date: e.date.toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: '2-digit',
+                orderBy: { date: 'desc' },
+                skip,
+                take,
             }),
-            paidById: e.paidById,
-            paidByName: e.paidBy.name,
-            splitType: e.splitType,
-            notes: e.notes,
-            receiptUrl: e.receiptUrl,
-            splits: e.splits.map((s) => ({
-                participantId: s.participantId,
-                participantName: s.participant.user.name,
-                amount: Number(s.amount),
+            this.prisma.expense.count({
+                where: {
+                    tripId,
+                    ...(category ? { category } : {}),
+                },
+            }),
+        ]);
+
+        return {
+            data: expenses.map((e) => ({
+                id: e.id,
+                description: e.description,
+                category: e.category,
+                amount: Number(e.amount),
+                date: e.date.toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                }),
+                paidById: e.paidById,
+                paidByName: e.paidBy.name,
+                splitType: e.splitType,
+                notes: e.notes,
+                receiptUrl: e.receiptUrl,
+                splits: e.splits.map((s) => ({
+                    participantId: s.participantId,
+                    participantName: s.participant.user.name,
+                    amount: Number(s.amount),
+                })),
             })),
-        }));
+            meta: {
+                total,
+                page: Number(page),
+                limit: Number(limit),
+                totalPages: Math.ceil(total / Number(limit)),
+            },
+        };
     }
 
     // ─── Resumo financeiro ────────────────────────────────────────────────────
@@ -295,5 +321,30 @@ export class ExpensesService {
         }
 
         return expense;
+    }
+    async uploadReceipt(
+        userId: string,
+        tripId: string,
+        expenseId: string,
+        file: Express.Multer.File,
+    ) {
+        if (!file) throw new BadRequestException('Nenhum arquivo enviado');
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+        if (!allowedTypes.includes(file.mimetype)) {
+            throw new BadRequestException('Formato não suportado. Use JPG, PNG ou PDF');
+        }
+
+        await this.assertExpenseOwner(userId, expenseId, tripId);
+
+        const receiptUrl = `/uploads/receipts/${file.filename}`;
+
+        const expense = await this.prisma.expense.update({
+            where: { id: expenseId },
+            data: { receiptUrl },
+            select: { id: true, receiptUrl: true },
+        });
+
+        return { id: expense.id, receiptUrl: expense.receiptUrl };
     }
 }
