@@ -192,11 +192,7 @@ export class TripsService {
             })) === 0;
 
         // Saldo de cada participante
-        const participantsWithBalance = await this.calculateParticipantBalances(
-            tripId,
-            totalSpent,
-            trip.participants.length,
-        );
+        const participantsWithBalance = await this.calculateParticipantBalances(tripId);
 
         // Status de nova viagem
         const newTripStatus = {
@@ -306,32 +302,42 @@ export class TripsService {
         return d;
     }
 
-    private async calculateParticipantBalances(
-        tripId: string,
-        totalSpent: number,
-        participantCount: number,
-    ) {
-        const quota = participantCount > 0 ? totalSpent / participantCount : 0;
-
+    private async calculateParticipantBalances(tripId: string) {
         const participants = await this.prisma.tripParticipant.findMany({
             where: { tripId },
             include: {
                 user: { select: { id: true, name: true, avatarUrl: true } },
-                expenseSplits: { include: { expense: { select: { amount: true } } } },
             },
         });
 
-        return participants.map((p) => {
-            const paid = p.expenseSplits.reduce(
-                (sum, s) => sum + Number(s.expense.amount),
-                0,
-            );
-            const balance = paid - quota;
-            return {
-                id: p.user.id,
-                name: p.user.name,
-                balance: Math.round(balance * 100) / 100,
-            };
-        });
+        return Promise.all(
+            participants.map(async (p) => {
+                // Quanto pagou
+                const paidExpenses = await this.prisma.expense.findMany({
+                    where: { tripId, paidById: p.userId },
+                    select: { amount: true },
+                });
+                const totalPaid = paidExpenses.reduce(
+                    (sum, e) => sum + Number(e.amount),
+                    0,
+                );
+
+                // Quanto deve (via splits)
+                const splits = await this.prisma.expenseSplit.findMany({
+                    where: { participantId: p.id },
+                    select: { amount: true },
+                });
+                const totalOwed = splits.reduce(
+                    (sum, s) => sum + Number(s.amount),
+                    0,
+                );
+
+                return {
+                    id: p.user.id,
+                    name: p.user.name,
+                    balance: Math.round((totalPaid - totalOwed) * 100) / 100,
+                };
+            }),
+        );
     }
 }

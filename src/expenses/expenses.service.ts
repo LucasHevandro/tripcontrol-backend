@@ -161,35 +161,48 @@ export class ExpensesService {
     async create(userId: string, tripId: string, dto: CreateExpenseDto) {
         await this.tripsService.assertParticipant(userId, tripId);
 
-        // Valida que quem pagou é participante da viagem
         const payer = await this.prisma.tripParticipant.findUnique({
             where: { tripId_userId: { tripId, userId: dto.paidById } },
         });
         if (!payer) throw new BadRequestException('Pagador não é participante da viagem');
 
-        // Busca todos os participantes pra divisão igual
         const allParticipants = await this.prisma.tripParticipant.findMany({
             where: { tripId },
         });
 
         const splitType = dto.splitType ?? SplitType.EQUAL;
-
         let splits: { participantId: string; amount: number }[] = [];
 
         if (splitType === SplitType.EQUAL) {
-            const participants =
-                dto.splitParticipants && dto.splitParticipants.length > 0
-                    ? dto.splitParticipants.map((s) => s.participantId)
-                    : allParticipants.map((p) => p.id);
+            let tripParticipantIds: string[];
 
-            const amountPerPerson = dto.amount / participants.length;
+            if (dto.splitParticipants && dto.splitParticipants.length > 0) {
+                // Frontend manda userIds — converte para TripParticipant.id
+                const found = await this.prisma.tripParticipant.findMany({
+                    where: {
+                        tripId,
+                        userId: { in: dto.splitParticipants.map((s) => s.participantId) },
+                    },
+                    select: { id: true },
+                });
+                tripParticipantIds = found.map((p) => p.id);
+            } else {
+                // Divide entre todos — já são TripParticipant.ids
+                tripParticipantIds = allParticipants.map((p) => p.id);
+            }
 
-            splits = participants.map((participantId) => ({
+            if (tripParticipantIds.length === 0) {
+                throw new BadRequestException(
+                    'Nenhum participante válido encontrado para divisão',
+                );
+            }
+
+            const amountPerPerson = dto.amount / tripParticipantIds.length;
+            splits = tripParticipantIds.map((participantId) => ({
                 participantId,
                 amount: Math.round(amountPerPerson * 100) / 100,
             }));
         } else {
-            // Divisão customizada — valores explícitos por participante
             if (!dto.splitParticipants || dto.splitParticipants.length === 0) {
                 throw new BadRequestException(
                     'Divisão customizada requer os valores por participante',
@@ -207,8 +220,19 @@ export class ExpensesService {
                 );
             }
 
+            // Converte userIds → TripParticipant.ids para divisão customizada também
+            const found = await this.prisma.tripParticipant.findMany({
+                where: {
+                    tripId,
+                    userId: { in: dto.splitParticipants.map((s) => s.participantId) },
+                },
+                select: { id: true, userId: true },
+            });
+
+            const participantMap = new Map(found.map((p) => [p.userId, p.id]));
+
             splits = dto.splitParticipants.map((s) => ({
-                participantId: s.participantId,
+                participantId: participantMap.get(s.participantId) ?? s.participantId,
                 amount: s.amount!,
             }));
         }
@@ -223,9 +247,7 @@ export class ExpensesService {
                 category: dto.category,
                 splitType,
                 notes: dto.notes,
-                splits: {
-                    create: splits,
-                },
+                splits: { create: splits },
             },
             include: {
                 paidBy: { select: { id: true, name: true } },

@@ -34,52 +34,55 @@ export class ParticipantsService {
                 user: {
                     select: { id: true, name: true, email: true, avatarUrl: true },
                 },
-                expenseSplits: {
-                    include: { expense: { select: { amount: true } } },
-                },
             },
         });
 
-        // Calcula totais financeiros
-        const allExpenses = await this.prisma.expense.findMany({
-            where: { tripId },
-            select: { amount: true },
-        });
+        // Para cada participante: quanto pagou e quanto deve (via splits)
+        const participantsWithBalance = await Promise.all(
+            participants.map(async (p) => {
+                // Total que esse participante pagou (como payer)
+                const paidExpenses = await this.prisma.expense.findMany({
+                    where: { tripId, paidById: p.userId },
+                    select: { amount: true },
+                });
+                const totalPaid = paidExpenses.reduce(
+                    (sum, e) => sum + Number(e.amount),
+                    0,
+                );
 
-        const totalSpent = allExpenses.reduce(
-            (sum, e) => sum + Number(e.amount),
+                // Total que esse participante deve (via expense_splits)
+                const splits = await this.prisma.expenseSplit.findMany({
+                    where: { participantId: p.id },
+                    select: { amount: true },
+                });
+                const totalOwed = splits.reduce(
+                    (sum, s) => sum + Number(s.amount),
+                    0,
+                );
+
+                const balance = Math.round((totalPaid - totalOwed) * 100) / 100;
+
+                return {
+                    id: p.user.id,
+                    name: p.user.name,
+                    email: p.user.email,
+                    avatarUrl: p.user.avatarUrl,
+                    role: p.role,
+                    totalPaid: Math.round(totalPaid * 100) / 100,
+                    individualQuota: Math.round(totalOwed * 100) / 100,
+                    balance,
+                    joinedAt: p.joinedAt,
+                };
+            }),
+        );
+
+        const totalSpent = participantsWithBalance.reduce(
+            (sum, p) => sum + p.totalPaid,
             0,
         );
 
-        const quota =
-            participants.length > 0 ? totalSpent / participants.length : 0;
+        const pendingSettlements = this.calculateSettlements(participantsWithBalance);
 
-        const participantsWithBalance = participants.map((p) => {
-            const totalPaid = p.expenseSplits.reduce(
-                (sum, s) => sum + Number(s.expense.amount),
-                0,
-            );
-            const balance = Math.round((totalPaid - quota) * 100) / 100;
-
-            return {
-                id: p.user.id,
-                name: p.user.name,
-                email: p.user.email,
-                avatarUrl: p.user.avatarUrl,
-                role: p.role,
-                totalPaid,
-                individualQuota: Math.round(quota * 100) / 100,
-                balance,
-                joinedAt: p.joinedAt,
-            };
-        });
-
-        // Acertos calculados (algoritmo de liquidação mínima)
-        const settlements = this.calculateSettlements(participantsWithBalance);
-
-        const pendingSettlements = settlements.filter((s) => s.amount > 0);
-
-        // Link de convite
         const tripData = await this.prisma.trip.findUnique({
             where: { id: tripId },
             select: { inviteToken: true },
@@ -91,18 +94,20 @@ export class ParticipantsService {
             participantCount: participants.length,
             maxParticipants: 10,
             organizerCount: participants.filter((p) => p.role === 'ORGANIZER').length,
-            totalSpent,
-            perPersonAverage: Math.round(quota * 100) / 100,
+            totalSpent: Math.round(totalSpent * 100) / 100,
+            perPersonAverage:
+                participants.length > 0
+                    ? Math.round((totalSpent / participants.length) * 100) / 100
+                    : 0,
             pendingSettlementsCount: pendingSettlements.length,
-            pendingSettlementsAmount: pendingSettlements.reduce(
-                (sum, s) => sum + s.amount,
-                0,
-            ),
+            pendingSettlementsAmount: Math.round(
+                pendingSettlements.reduce((sum, s) => sum + s.amount, 0) * 100,
+            ) / 100,
             groupStatusLabel: 'Ativo',
             groupStatusSublabel: 'todos confirmados',
             inviteLink: `tripcontrol.app/join/${tripData?.inviteToken}`,
             participants: participantsWithBalance,
-            settlementSummary: settlements,
+            settlementSummary: pendingSettlements,
         };
     }
 
@@ -234,7 +239,6 @@ export class ParticipantsService {
     }
 
     // ─── Acertos ──────────────────────────────────────────────────────────────
-
     async getSettlements(userId: string, tripId: string) {
         await this.tripsService.assertParticipant(userId, tripId);
 
@@ -242,37 +246,47 @@ export class ParticipantsService {
             where: { tripId },
             include: {
                 user: { select: { id: true, name: true } },
-                expenseSplits: {
-                    include: { expense: { select: { amount: true } } },
-                },
             },
         });
 
-        const allExpenses = await this.prisma.expense.findMany({
-            where: { tripId },
-            select: { amount: true },
-        });
+        const withBalance = await Promise.all(
+            participants.map(async (p) => {
+                const paidExpenses = await this.prisma.expense.findMany({
+                    where: { tripId, paidById: p.userId },
+                    select: { amount: true },
+                });
+                const totalPaid = paidExpenses.reduce(
+                    (sum, e) => sum + Number(e.amount),
+                    0,
+                );
 
-        const totalSpent = allExpenses.reduce(
-            (sum, e) => sum + Number(e.amount),
+                const splits = await this.prisma.expenseSplit.findMany({
+                    where: { participantId: p.id },
+                    select: { amount: true },
+                });
+                const totalOwed = splits.reduce(
+                    (sum, s) => sum + Number(s.amount),
+                    0,
+                );
+
+                return {
+                    id: p.user.id,
+                    name: p.user.name,
+                    balance: Math.round((totalPaid - totalOwed) * 100) / 100,
+                };
+            }),
+        );
+
+        const totalSpent = withBalance.reduce(
+            (sum, p) => sum + (p.balance > 0 ? p.balance : 0),
             0,
         );
-        const quota = participants.length > 0 ? totalSpent / participants.length : 0;
-
-        const withBalance = participants.map((p) => {
-            const totalPaid = p.expenseSplits.reduce(
-                (sum, s) => sum + Number(s.expense.amount),
-                0,
-            );
-            return {
-                id: p.user.id,
-                name: p.user.name,
-                balance: Math.round((totalPaid - quota) * 100) / 100,
-            };
-        });
 
         return {
-            perPersonAverage: Math.round(quota * 100) / 100,
+            perPersonAverage:
+                participants.length > 0
+                    ? Math.round((totalSpent / participants.length) * 100) / 100
+                    : 0,
             settlements: this.calculateSettlements(withBalance),
         };
     }
