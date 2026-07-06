@@ -4,6 +4,7 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
@@ -14,6 +15,7 @@ export class AuthService {
     constructor(
         private prisma: PrismaService,
         private jwt: JwtService,
+        private configService: ConfigService,
     ) { }
 
     // ─── Registro ────────────────────────────────────────────────────────────
@@ -136,17 +138,26 @@ export class AuthService {
         const payload = { sub: userId, email };
 
         const accessToken = this.jwt.sign(payload, {
-            secret: process.env.JWT_SECRET,
-            expiresIn: 60 * 15, // 15 minutos em segundos
+            secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+            expiresIn: this.parseDurationToSeconds(
+                this.configService.get<string>('JWT_EXPIRES_IN', '15m'),
+            ),
         });
 
         const refreshToken = this.jwt.sign(payload, {
-            secret: process.env.JWT_REFRESH_SECRET,
-            expiresIn: 60 * 60 * 24 * 7, // 7 dias em segundos
+            secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+            expiresIn: this.parseDurationToSeconds(
+                this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d'),
+            ),
         });
 
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7);
+        const refreshExpiresIn = this.configService.get<string>(
+            'JWT_REFRESH_EXPIRES_IN',
+            '7d',
+        );
+        const expiresAt = new Date(
+            Date.now() + this.parseDurationToMilliseconds(refreshExpiresIn),
+        );
 
         await this.prisma.refreshToken.create({
             data: {
@@ -158,4 +169,29 @@ export class AuthService {
 
         return { accessToken, refreshToken };
     }
+
+    private parseDurationToMilliseconds(value: string) {
+        const match = value.match(/^(\d+)([smhd])$/);
+
+        if (!match) {
+            return 7 * 24 * 60 * 60 * 1000;
+        }
+
+        const amount = Number(match[1]);
+        const unit = match[2];
+
+        const multipliers: Record<string, number> = {
+            s: 1000,
+            m: 60 * 1000,
+            h: 60 * 60 * 1000,
+            d: 24 * 60 * 60 * 1000,
+        };
+
+        return amount * multipliers[unit as keyof typeof multipliers];
+    }
+
+    private parseDurationToSeconds(value: string) {
+        return Math.floor(this.parseDurationToMilliseconds(value) / 1000);
+    }
+
 }
