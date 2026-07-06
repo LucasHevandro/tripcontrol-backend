@@ -1,98 +1,367 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# ✈️ TripControl API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend da aplicação **TripControl**, uma plataforma para planejamento colaborativo de viagens, gerenciamento de participantes, controle de despesas, reservas e organização do roteiro.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+O projeto foi desenvolvido utilizando **NestJS**, **Prisma** e **PostgreSQL**, seguindo uma arquitetura modular e boas práticas para construção de APIs REST.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+# Tecnologias
 
-## Project setup
+- NestJS
+- TypeScript
+- Prisma ORM
+- PostgreSQL
+- JWT Authentication
+- Passport
+- Swagger (OpenAPI)
+- Class Validator
+- Class Transformer
+- Multer
+- Helmet
 
-```bash
-$ yarn install
+---
+
+# Arquitetura
+
+```
+src
+├── auth
+├── common
+├── expenses
+├── invites
+├── prisma
+├── reservations
+├── roadmap
+├── trips
+├── users
+└── generated
 ```
 
-## Compile and run the project
+Cada módulo é responsável por uma área de negócio da aplicação.
+
+Exemplo:
+
+- **Auth** → autenticação e autorização
+- **Users** → gerenciamento de usuários
+- **Trips** → gerenciamento de viagens
+- **Expenses** → controle financeiro
+- **Reservations** → hospedagem, transporte e reservas
+- **Roadmap** → roteiro de atividades
+- **Invites** → convite de participantes
+
+---
+
+# Funcionalidades
+
+## Autenticação
+
+- Cadastro de usuário
+- Login
+- Refresh Token
+- Alteração de senha
+- Perfil do usuário
+
+---
+
+## Viagens
+
+- Criar viagem
+- Editar viagem
+- Excluir viagem
+- Listar viagens
+- Compartilhar viagem através de convite
+- Definir orçamento
+- Tipo de viagem
+- Status da viagem
+
+---
+
+## Participantes
+
+- Adicionar participantes
+- Remover participantes
+- Aceitar convite
+- Controle de permissões
+
+---
+
+## Despesas
+
+- Cadastro de despesas
+- Categorias
+- Pagador da despesa
+- Divisão igualitária
+- Divisão personalizada
+- Histórico financeiro
+- Resumo de gastos
+
+---
+
+## Reservas
+
+Suporte para diferentes tipos de reservas.
+
+Exemplos:
+
+- Hotel
+- Airbnb
+- Passagens
+- Aluguel de veículo
+- Outros
+
+---
+
+## Roteiro
+
+- Cadastro de atividades
+- Organização por data
+- Horários
+- Localização
+- Observações
+
+---
+
+# Banco de Dados
+
+O projeto utiliza **PostgreSQL** com **Prisma ORM**.
+
+Principais entidades:
+
+- User
+- RefreshToken
+- Trip
+- TripParticipant
+- Expense
+- ExpenseSplit
+- Reservation
+- RoadmapItem
+- Invite
+
+---
+
+# Instalação
+
+## Clone o projeto
 
 ```bash
-# development
-$ yarn run start
+git clone <repositorio>
 
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+cd tripcontrol-backend
 ```
 
-## Run tests
+---
+
+## Instale as dependências
 
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+npm install
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Configure o arquivo .env
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Crie um arquivo `.env` na raiz do projeto.
+
+Exemplo:
+
+```env
+DATABASE_URL="postgresql://usuario:senha@localhost:5432/tripcontrol"
+
+JWT_SECRET=seu_jwt_secret
+
+JWT_REFRESH_SECRET=seu_refresh_secret
+
+JWT_EXPIRES_IN=15m
+
+JWT_REFRESH_EXPIRES_IN=30d
+
+FRONTEND_URL=http://localhost:3000
+```
+
+---
+
+# Banco de Dados
+
+Gerar o client Prisma
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+npx prisma generate
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Executar migrations
 
-## Resources
+```bash
+npx prisma migrate dev
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+Caso queira visualizar o banco:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+npx prisma studio
+```
 
-## Support
+---
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Executando o projeto
 
-## Stay in touch
+Modo desenvolvimento
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+npm run start:dev
+```
 
-## License
+Modo produção
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+npm run build
+
+npm run start:prod
+```
+
+---
+
+# Swagger
+
+Após iniciar a aplicação, a documentação estará disponível em:
+
+```
+http://localhost:3000/api
+```
+
+*(A URL pode variar conforme a configuração do projeto.)*
+
+---
+
+# Scripts
+
+Iniciar aplicação
+
+```bash
+npm run start
+```
+
+Modo desenvolvimento
+
+```bash
+npm run start:dev
+```
+
+Build
+
+```bash
+npm run build
+```
+
+Lint
+
+```bash
+npm run lint
+```
+
+Formatar código
+
+```bash
+npm run format
+```
+
+Testes
+
+```bash
+npm test
+```
+
+Cobertura
+
+```bash
+npm run test:cov
+```
+
+---
+
+# Fluxo de autenticação
+
+```
+Register
+      │
+      ▼
+ Login
+      │
+      ▼
+Access Token
+      │
+      ▼
+Requisições autenticadas
+      │
+      ▼
+Refresh Token
+      │
+      ▼
+Novo Access Token
+```
+
+---
+
+# Segurança
+
+A API utiliza:
+
+- JWT Authentication
+- Refresh Token
+- Password Hash (bcrypt)
+- Helmet
+- Validação de DTOs
+- Guards do NestJS
+- Pipes de validação
+
+---
+
+# Organização do projeto
+
+O projeto segue arquitetura modular do NestJS.
+
+Cada módulo contém:
+
+```
+module
+
+controller
+
+service
+
+dto
+
+entities (quando necessário)
+
+guards
+
+decorators
+```
+
+---
+
+# Convenções
+
+- Controllers possuem apenas responsabilidade HTTP.
+- Services concentram toda regra de negócio.
+- DTOs realizam validações de entrada.
+- Prisma é responsável pelo acesso ao banco.
+- Todas as rotas protegidas utilizam JWT.
+
+---
+
+# Roadmap
+
+Funcionalidades previstas para versões futuras:
+
+- Notificações Push
+- Compartilhamento em tempo real
+- Chat entre participantes
+- Integração com Google Maps
+- Integração com Google Calendar
+- Upload para armazenamento em nuvem
+- Conversão automática de moedas
+- Controle offline
+- Dashboard financeiro
+- Relatórios de viagem
