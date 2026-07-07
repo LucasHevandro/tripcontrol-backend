@@ -8,13 +8,24 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { TripsService } from '../trips/trips.service';
 import { InviteByEmailDto } from './dto/invite-by-email.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ParticipantsService {
     constructor(
         private prisma: PrismaService,
         private tripsService: TripsService,
+        private config: ConfigService,
     ) { }
+
+    /** Monta o link de convite usando a URL do frontend configurada por ambiente */
+    private buildInviteLink(inviteToken: string | undefined): string {
+        const frontendUrl = this.config.get<string>(
+            'FRONTEND_URL',
+            'http://localhost:3000',
+        );
+        return `${frontendUrl}/join/${inviteToken}`;
+    }
 
     // ─── Listar participantes ─────────────────────────────────────────────────
 
@@ -105,7 +116,7 @@ export class ParticipantsService {
             ) / 100,
             groupStatusLabel: 'Ativo',
             groupStatusSublabel: 'todos confirmados',
-            inviteLink: `tripcontrol.app/join/${tripData?.inviteToken}`,
+            inviteLink: this.buildInviteLink(tripData?.inviteToken),
             participants: participantsWithBalance,
             settlementSummary: pendingSettlements,
         };
@@ -171,7 +182,7 @@ export class ParticipantsService {
         if (!trip) throw new NotFoundException('Viagem não encontrada');
 
         return {
-            inviteLink: `tripcontrol.app/join/${trip.inviteToken}`,
+            inviteLink: this.buildInviteLink(trip.inviteToken),
             inviteToken: trip.inviteToken,
         };
     }
