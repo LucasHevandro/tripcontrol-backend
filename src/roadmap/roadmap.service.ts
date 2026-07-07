@@ -231,6 +231,11 @@ export class RoadmapService {
             note: a.note ?? '',
             status: a.status.toLowerCase(),
             badge: this.buildBadge(a.status),
+            // Campos crus — usados pelo formulário de edição no frontend
+            date: a.date instanceof Date ? a.date.toISOString().split('T')[0] : a.date,
+            startTime: a.startTime,
+            costAmount: a.costAmount ? Number(a.costAmount) : null,
+            costType: a.costType,
         };
     }
 

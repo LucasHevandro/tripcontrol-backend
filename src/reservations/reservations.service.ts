@@ -157,6 +157,9 @@ export class ReservationsService {
             warning: details.warning ?? null,
             primaryAction,
             notes: r.notes,
+            // Campos crus — usados pelo formulário de edição no frontend
+            rawDetails: details,
+            paidById: r.paidById ?? null,
         };
     }
 
