@@ -190,38 +190,62 @@ export class ParticipantsService {
     // ─── Entrar via token ─────────────────────────────────────────────────────
 
     async joinByToken(userId: string, token: string) {
-        // Tenta via link direto da viagem (inviteToken)
+        // Resolve a viagem a partir do token (link direto OU convite por e-mail)
+        let tripId: string | null = null;
+        let inviteId: string | null = null;
+
         const tripByToken = await this.prisma.trip.findUnique({
             where: { inviteToken: token },
         });
 
         if (tripByToken) {
-            return this.addParticipant(userId, tripByToken.id);
+            tripId = tripByToken.id;
+        } else {
+            const invite = await this.prisma.invite.findUnique({
+                where: { token },
+            });
+
+            if (!invite) throw new NotFoundException('Token de convite inválido');
+            if (invite.expiresAt < new Date()) {
+                throw new BadRequestException('Convite expirado');
+            }
+            if (invite.status !== 'PENDING') {
+                throw new BadRequestException('Convite já utilizado');
+            }
+            tripId = invite.tripId;
+            inviteId = invite.id;
         }
 
-        // Tenta via convite por e-mail
-        const invite = await this.prisma.invite.findUnique({
-            where: { token },
-            include: { trip: true },
+        const trip = await this.prisma.trip.findUnique({
+            where: { id: tripId },
+            select: { id: true, name: true },
+        });
+        if (!trip) throw new NotFoundException('Viagem não encontrada');
+
+        // Idempotente: se já for participante, apenas retorna a viagem (sem erro)
+        const existing = await this.prisma.tripParticipant.findUnique({
+            where: { tripId_userId: { tripId, userId } },
         });
 
-        if (!invite) throw new NotFoundException('Token de convite inválido');
-        if (invite.expiresAt < new Date()) {
-            throw new BadRequestException('Convite expirado');
+        if (!existing) {
+            await this.prisma.tripParticipant.create({
+                data: { tripId, userId, role: 'MEMBER' },
+            });
+
+            // Marca o convite por e-mail como aceito, quando aplicável
+            if (inviteId) {
+                await this.prisma.invite.update({
+                    where: { id: inviteId },
+                    data: { status: 'ACCEPTED' },
+                });
+            }
         }
-        if (invite.status !== 'PENDING') {
-            throw new BadRequestException('Convite já utilizado');
-        }
 
-        const participant = await this.addParticipant(userId, invite.tripId);
-
-        // Marca convite como aceito
-        await this.prisma.invite.update({
-            where: { id: invite.id },
-            data: { status: 'ACCEPTED' },
-        });
-
-        return participant;
+        return {
+            tripId: trip.id,
+            tripName: trip.name,
+            alreadyMember: !!existing,
+        };
     }
 
     // ─── Remover participante ─────────────────────────────────────────────────
