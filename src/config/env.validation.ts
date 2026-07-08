@@ -28,4 +28,9 @@ export const envValidationSchema = Joi.object({
     FRONTEND_URL: Joi.string()
         .uri()
         .required(),
+
+    // OAuth Google — opcional (login com Google só funciona se configurado)
+    GOOGLE_CLIENT_ID: Joi.string()
+        .allow('')
+        .optional(),
 });
