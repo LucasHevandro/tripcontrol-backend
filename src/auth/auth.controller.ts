@@ -19,6 +19,7 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { JwtGuard } from './guards/jwt.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -43,6 +44,15 @@ export class AuthController {
     @ApiUnauthorizedResponse({ description: 'Credenciais inválidas' })
     login(@Body() dto: LoginDto) {
         return this.authService.login(dto);
+    }
+
+    @Post('google')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Login/cadastro com conta Google' })
+    @ApiOkResponse({ description: 'Autenticação com Google realizada com sucesso' })
+    @ApiUnauthorizedResponse({ description: 'Token do Google inválido' })
+    googleLogin(@Body() dto: GoogleLoginDto) {
+        return this.authService.googleLogin(dto.credential);
     }
 
     @Post('refresh')
