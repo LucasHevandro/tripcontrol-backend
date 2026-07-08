@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { envValidationSchema } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
+import { EmailModule } from './email/email.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { TripsModule } from './trips/trips.module';
@@ -18,6 +19,7 @@ import { ReservationsModule } from './reservations/reservations.module';
       validationSchema: envValidationSchema,
     }),
     PrismaModule,
+    EmailModule,
     AuthModule,
     UsersModule,
     TripsModule,

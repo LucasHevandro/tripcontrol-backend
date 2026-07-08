@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TripsService } from '../trips/trips.service';
 import { InviteByEmailDto } from './dto/invite-by-email.dto';
 import { ConfigService } from '@nestjs/config';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class ParticipantsService {
@@ -16,6 +17,7 @@ export class ParticipantsService {
         private prisma: PrismaService,
         private tripsService: TripsService,
         private config: ConfigService,
+        private email: EmailService,
     ) { }
 
     /** Monta o link de convite usando a URL do frontend configurada por ambiente */
@@ -127,6 +129,21 @@ export class ParticipantsService {
     async inviteByEmail(userId: string, tripId: string, dto: InviteByEmailDto) {
         await this.tripsService.assertParticipant(userId, tripId);
 
+        // Dados usados no corpo do e-mail de convite
+        const [trip, inviter] = await Promise.all([
+            this.prisma.trip.findUnique({
+                where: { id: tripId },
+                select: { name: true },
+            }),
+            this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { name: true },
+            }),
+        ]);
+
+        const tripName = trip?.name ?? 'uma viagem';
+        const inviterName = inviter?.name ?? 'Um amigo';
+
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
@@ -151,11 +168,13 @@ export class ParticipantsService {
                     data: { tripId, invitedBy: userId, email, expiresAt },
                 });
 
-                // TODO: enviar e-mail real com o link de convite
-                // await this.emailService.sendInvite(email, invite.token, tripName);
-                console.log(
-                    `📧 Convite enviado para ${email}: /join/${invite.token}`,
-                );
+                // Envia o e-mail de convite (não bloqueia em caso de falha)
+                await this.email.sendInvite({
+                    to: email,
+                    tripName,
+                    inviterName,
+                    inviteToken: invite.token,
+                });
 
                 return invite;
             }),
@@ -331,10 +350,75 @@ export class ParticipantsService {
     async notifyDebtors(userId: string, tripId: string) {
         await this.tripsService.assertParticipant(userId, tripId);
 
-        // TODO: enviar e-mail/push real para cada devedor
-        console.log(`📢 Notificando devedores da viagem ${tripId}`);
+        const trip = await this.prisma.trip.findUnique({
+            where: { id: tripId },
+            select: { name: true },
+        });
+        if (!trip) throw new NotFoundException('Viagem não encontrada');
 
-        return { message: 'Devedores notificados com sucesso' };
+        // Reúne participantes com saldo (paga - deve) e um mapa id → e-mail
+        const participants = await this.prisma.tripParticipant.findMany({
+            where: { tripId },
+            include: { user: { select: { id: true, name: true, email: true } } },
+        });
+
+        const emailByParticipantUserId = new Map<string, string>();
+
+        const withBalance = await Promise.all(
+            participants.map(async (p) => {
+                const paid = await this.prisma.expense.findMany({
+                    where: { tripId, paidById: p.userId },
+                    select: { amount: true },
+                });
+                const totalPaid = paid.reduce((s, e) => s + Number(e.amount), 0);
+
+                const splits = await this.prisma.expenseSplit.findMany({
+                    where: { participantId: p.id },
+                    select: { amount: true },
+                });
+                const totalOwed = splits.reduce((s, x) => s + Number(x.amount), 0);
+
+                emailByParticipantUserId.set(p.user.id, p.user.email);
+
+                return {
+                    id: p.user.id,
+                    name: p.user.name,
+                    balance: Math.round((totalPaid - totalOwed) * 100) / 100,
+                };
+            }),
+        );
+
+        const settlements = this.calculateSettlements(withBalance);
+
+        // Envia um e-mail para cada devedor (from = quem deve)
+        const currencyFmt = new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+        });
+
+        const results = await Promise.all(
+            settlements.map((s) => {
+                const to = emailByParticipantUserId.get(s.fromParticipantId);
+                if (!to) return Promise.resolve(false);
+                return this.email.sendDebtorNotification({
+                    to,
+                    debtorName: s.fromName,
+                    tripName: trip.name,
+                    amount: currencyFmt.format(s.amount),
+                    toName: s.toName,
+                });
+            }),
+        );
+
+        const notified = results.filter(Boolean).length;
+
+        return {
+            message:
+                notified > 0
+                    ? `${notified} devedor(es) notificado(s) por e-mail`
+                    : 'Nenhum devedor pendente para notificar',
+            notified,
+        };
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

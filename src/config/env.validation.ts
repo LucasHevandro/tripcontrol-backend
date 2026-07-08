@@ -33,4 +33,13 @@ export const envValidationSchema = Joi.object({
     GOOGLE_CLIENT_ID: Joi.string()
         .allow('')
         .optional(),
+
+    // E-mail (Resend) — opcional; se ausente, e-mails são apenas logados
+    RESEND_API_KEY: Joi.string()
+        .allow('')
+        .optional(),
+
+    EMAIL_FROM: Joi.string()
+        .allow('')
+        .optional(),
 });
