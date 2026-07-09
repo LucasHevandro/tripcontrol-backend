@@ -376,34 +376,34 @@ export class ExpensesService {
     }
 
     async createPayment(tripId: string, userId: string, dto: CreatePaymentDto) {
-        // 1. Validar que os dois participantes pertencem a essa trip
+        // Resolve userIds → TripParticipant.ids
         const [from, to] = await Promise.all([
             this.prisma.tripParticipant.findFirst({
-                where: { id: dto.fromParticipantId, tripId },
+                where: { userId: dto.fromUserId, tripId },
             }),
             this.prisma.tripParticipant.findFirst({
-                where: { id: dto.toParticipantId, tripId },
+                where: { userId: dto.toUserId, tripId },
             }),
         ]);
-        if (!from || !to) throw new NotFoundException('Participante não encontrado nessa viagem');
+        if (!from || !to) {
+            throw new NotFoundException('Participante não encontrado nessa viagem');
+        }
 
-        // 2. Não permitir pagar a si mesmo
-        if (dto.fromParticipantId === dto.toParticipantId) {
+        // Não permitir pagar a si mesmo
+        if (dto.fromUserId === dto.toUserId) {
             throw new BadRequestException('Devedor e credor não podem ser a mesma pessoa');
         }
 
-        // 3. AUTORIZAÇÃO: só o devedor pode registrar
-        //    O userId autenticado deve ser o "usuário do fromParticipant"
+        // Autorização: só o devedor pode registrar
         if (from.userId !== userId) {
             throw new ForbiddenException('Só o próprio devedor pode marcar como pago');
         }
 
-        // 4. Criar
         return this.prisma.payment.create({
             data: {
                 tripId,
-                fromParticipantId: dto.fromParticipantId,
-                toParticipantId: dto.toParticipantId,
+                fromParticipantId: from.id,   // TripParticipant.id resolvido
+                toParticipantId: to.id,       // TripParticipant.id resolvido
                 amount: dto.amount,
                 createdBy: userId,
                 notes: dto.notes,
