@@ -59,7 +59,8 @@ export type InviteStatus = (typeof InviteStatus)[keyof typeof InviteStatus]
 
 export const SplitType = {
   EQUAL: 'EQUAL',
-  CUSTOM: 'CUSTOM'
+  CUSTOM: 'CUSTOM',
+  INDIVIDUAL: 'INDIVIDUAL'
 } as const
 
 export type SplitType = (typeof SplitType)[keyof typeof SplitType]

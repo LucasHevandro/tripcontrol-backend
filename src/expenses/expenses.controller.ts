@@ -128,7 +128,7 @@ export class ExpensesController {
 }
 
 @Controller('trips/:tripId/payments')
-@UseGuards(JwtAuthGuard, TripMemberGuard)
+@UseGuards(JwtGuard)
 export class PaymentsController {
     constructor(private readonly paymentsService: ExpensesService) { }
 

@@ -115,8 +115,11 @@ export class ExpensesService {
         });
 
         const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+        const sharedTotal = expenses
+            .filter((e) => e.splitType !== SplitType.INDIVIDUAL)
+            .reduce((sum, e) => sum + Number(e.amount), 0);
         const perPersonAverage =
-            participantCount > 0 ? totalSpent / participantCount : 0;
+            participantCount > 0 ? sharedTotal / participantCount : 0;
 
         // Maior despesa
         const largest = expenses.reduce(
@@ -174,11 +177,13 @@ export class ExpensesService {
         const splitType = dto.splitType ?? SplitType.EQUAL;
         let splits: { participantId: string; amount: number }[] = [];
 
-        if (splitType === SplitType.EQUAL) {
+        if (splitType === SplitType.INDIVIDUAL) {
+            // Cada um pagou o seu — não gera splits, não afeta acertos
+            splits = [];
+        } else if (splitType === SplitType.EQUAL) {
             let tripParticipantIds: string[];
 
             if (dto.splitParticipants && dto.splitParticipants.length > 0) {
-                // Frontend manda userIds — converte para TripParticipant.id
                 const found = await this.prisma.tripParticipant.findMany({
                     where: {
                         tripId,
@@ -188,7 +193,6 @@ export class ExpensesService {
                 });
                 tripParticipantIds = found.map((p) => p.id);
             } else {
-                // Divide entre todos — já são TripParticipant.ids
                 tripParticipantIds = allParticipants.map((p) => p.id);
             }
 
@@ -204,6 +208,7 @@ export class ExpensesService {
                 amount: Math.round(amountPerPerson * 100) / 100,
             }));
         } else {
+            // CUSTOM — mantém a lógica atual
             if (!dto.splitParticipants || dto.splitParticipants.length === 0) {
                 throw new BadRequestException(
                     'Divisão customizada requer os valores por participante',
@@ -221,7 +226,6 @@ export class ExpensesService {
                 );
             }
 
-            // Converte userIds → TripParticipant.ids para divisão customizada também
             const found = await this.prisma.tripParticipant.findMany({
                 where: {
                     tripId,

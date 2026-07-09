@@ -62,3 +62,8 @@ export type RoadmapActivity = Prisma.RoadmapActivityModel
  * 
  */
 export type Reservation = Prisma.ReservationModel
+/**
+ * Model Payment
+ * 
+ */
+export type Payment = Prisma.PaymentModel
