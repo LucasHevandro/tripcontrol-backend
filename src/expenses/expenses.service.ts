@@ -9,6 +9,7 @@ import { TripsService } from '../trips/trips.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { SplitType } from '../generated/prisma/client';
+import { CreatePaymentDto } from './dto/create-payment-dto';
 
 @Injectable()
 export class ExpensesService {
@@ -368,5 +369,41 @@ export class ExpensesService {
         });
 
         return { id: expense.id, receiptUrl: expense.receiptUrl };
+    }
+
+    async createPayment(tripId: string, userId: string, dto: CreatePaymentDto) {
+        // 1. Validar que os dois participantes pertencem a essa trip
+        const [from, to] = await Promise.all([
+            this.prisma.tripParticipant.findFirst({
+                where: { id: dto.fromParticipantId, tripId },
+            }),
+            this.prisma.tripParticipant.findFirst({
+                where: { id: dto.toParticipantId, tripId },
+            }),
+        ]);
+        if (!from || !to) throw new NotFoundException('Participante não encontrado nessa viagem');
+
+        // 2. Não permitir pagar a si mesmo
+        if (dto.fromParticipantId === dto.toParticipantId) {
+            throw new BadRequestException('Devedor e credor não podem ser a mesma pessoa');
+        }
+
+        // 3. AUTORIZAÇÃO: só o devedor pode registrar
+        //    O userId autenticado deve ser o "usuário do fromParticipant"
+        if (from.userId !== userId) {
+            throw new ForbiddenException('Só o próprio devedor pode marcar como pago');
+        }
+
+        // 4. Criar
+        return this.prisma.payment.create({
+            data: {
+                tripId,
+                fromParticipantId: dto.fromParticipantId,
+                toParticipantId: dto.toParticipantId,
+                amount: dto.amount,
+                createdBy: userId,
+                notes: dto.notes,
+            },
+        });
     }
 }

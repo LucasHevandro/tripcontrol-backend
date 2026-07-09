@@ -7,6 +7,7 @@ import {
     IsArray,
     Min,
     MinLength,
+    ValidateIf,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SplitType } from '../../generated/prisma/client';
@@ -44,6 +45,7 @@ export class CreateExpenseDto {
 
     @ApiProperty({ example: 'uuid-do-usuario-que-pagou' })
     @IsString()
+    @ValidateIf((dto) => dto.splitType !== 'INDIVIDUAL')
     paidById: string;
 
     @ApiPropertyOptional({ enum: SplitType, default: SplitType.EQUAL })
@@ -57,6 +59,7 @@ export class CreateExpenseDto {
     })
     @IsOptional()
     @IsArray()
+    @ValidateIf((dto) => dto.splitType !== 'INDIVIDUAL')
     splitParticipants?: SplitParticipantDto[];
 
     @ApiPropertyOptional({ example: 'Mesa para 6 pessoas' })

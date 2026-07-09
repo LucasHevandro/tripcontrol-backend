@@ -85,6 +85,7 @@ model Trip {
   inviteToken     String          @unique @default(uuid())
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  payments        Payment[]
 
   participants TripParticipant[]
   expenses     Expense[]
@@ -108,6 +109,8 @@ model TripParticipant {
   userId   String
   role     ParticipantRole @default(MEMBER)
   joinedAt DateTime        @default(now())
+  paymentsMade      Payment[] @relation("PaymentsMade")
+  paymentsReceived  Payment[] @relation("PaymentsReceived")
 
   trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -147,6 +150,7 @@ model Invite {
 enum SplitType {
   EQUAL
   CUSTOM
+  INDIVIDUAL
 }
 
 model Expense {
@@ -254,4 +258,23 @@ model Reservation {
   trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   @@map("reservations")
+}
+
+model Payment {
+  id                  String   @id @default(uuid())
+  tripId              String
+  fromParticipantId   String   // devedor (paga)
+  toParticipantId     String   // credor (recebe)
+  amount              Decimal  @db.Decimal(10, 2)
+  paidAt              DateTime @default(now())
+  createdBy           String   // userId de quem registrou (deve ser === fromParticipant.userId)
+  notes               String?  @db.Text
+
+  trip                Trip                @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  fromParticipant     TripParticipant     @relation("PaymentsMade", fields: [fromParticipantId], references: [id], onDelete: Restrict)
+  toParticipant       TripParticipant     @relation("PaymentsReceived", fields: [toParticipantId], references: [id], onDelete: Restrict)
+
+  @@index([tripId])
+  @@index([fromParticipantId])
+  @@index([toParticipantId])
 }
