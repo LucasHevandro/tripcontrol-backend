@@ -10,6 +10,7 @@ import { TripsService } from '../trips/trips.service';
 import { InviteByEmailDto } from './dto/invite-by-email.dto';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
+import { SplitType } from '../generated/prisma/client';
 
 @Injectable()
 export class ParticipantsService {
@@ -53,27 +54,40 @@ export class ParticipantsService {
         // Para cada participante: quanto pagou e quanto deve (via splits)
         const participantsWithBalance = await Promise.all(
             participants.map(async (p) => {
-                // Total que esse participante pagou (como payer)
                 const paidExpenses = await this.prisma.expense.findMany({
-                    where: { tripId, paidById: p.userId },
+                    where: { tripId, paidById: p.userId, splitType: { not: SplitType.INDIVIDUAL } },
                     select: { amount: true },
                 });
-                const totalPaid = paidExpenses.reduce(
-                    (sum, e) => sum + Number(e.amount),
-                    0,
-                );
+                const totalPaid = paidExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
-                // Total que esse participante deve (via expense_splits)
                 const splits = await this.prisma.expenseSplit.findMany({
                     where: { participantId: p.id },
                     select: { amount: true },
                 });
-                const totalOwed = splits.reduce(
-                    (sum, s) => sum + Number(s.amount),
+                const totalOwed = splits.reduce((sum, s) => sum + Number(s.amount), 0);
+
+                // Pagamentos: quem paga reduz débito, quem recebe reduz crédito
+                const paymentsMade = await this.prisma.payment.findMany({
+                    where: { tripId, fromParticipantId: p.id },
+                    select: { amount: true },
+                });
+                const totalPaidToOthers = paymentsMade.reduce(
+                    (sum, x) => sum + Number(x.amount),
                     0,
                 );
 
-                const balance = Math.round((totalPaid - totalOwed) * 100) / 100;
+                const paymentsReceived = await this.prisma.payment.findMany({
+                    where: { tripId, toParticipantId: p.id },
+                    select: { amount: true },
+                });
+                const totalReceivedFromOthers = paymentsReceived.reduce(
+                    (sum, x) => sum + Number(x.amount),
+                    0,
+                );
+
+                const balance = Math.round(
+                    (totalPaid - totalOwed + totalPaidToOthers - totalReceivedFromOthers) * 100,
+                ) / 100;
 
                 return {
                     id: p.user.id,
@@ -306,18 +320,39 @@ export class ParticipantsService {
         const withBalance = await Promise.all(
             participants.map(async (p) => {
                 const paidExpenses = await this.prisma.expense.findMany({
-                    where: { tripId, paidById: p.userId },
+                    where: {
+                        tripId,
+                        paidById: p.userId,
+                        splitType: { not: SplitType.INDIVIDUAL },
+                    },
                     select: { amount: true },
                 });
                 const totalPaid = paidExpenses.reduce(
                     (sum, e) => sum + Number(e.amount),
                     0,
                 );
-
                 const splits = await this.prisma.expenseSplit.findMany({
                     where: { participantId: p.id },
                     select: { amount: true },
                 });
+                // Pagamentos: quem paga reduz débito, quem recebe reduz crédito
+                const paymentsMade = await this.prisma.payment.findMany({
+                    where: { tripId, fromParticipantId: p.id },
+                    select: { amount: true },
+                });
+                const totalPaidToOthers = paymentsMade.reduce(
+                    (sum, x) => sum + Number(x.amount),
+                    0,
+                );
+
+                const paymentsReceived = await this.prisma.payment.findMany({
+                    where: { tripId, toParticipantId: p.id },
+                    select: { amount: true },
+                });
+                const totalReceivedFromOthers = paymentsReceived.reduce(
+                    (sum, x) => sum + Number(x.amount),
+                    0,
+                );
                 const totalOwed = splits.reduce(
                     (sum, s) => sum + Number(s.amount),
                     0,
@@ -326,7 +361,7 @@ export class ParticipantsService {
                 return {
                     id: p.user.id,
                     name: p.user.name,
-                    balance: Math.round((totalPaid - totalOwed) * 100) / 100,
+                    balance: Math.round((totalPaid + totalPaidToOthers - totalReceivedFromOthers - totalOwed) * 100) / 100,
                 };
             }),
         );
@@ -367,7 +402,11 @@ export class ParticipantsService {
         const withBalance = await Promise.all(
             participants.map(async (p) => {
                 const paid = await this.prisma.expense.findMany({
-                    where: { tripId, paidById: p.userId },
+                    where: {
+                        tripId,
+                        paidById: p.userId,
+                        splitType: { not: SplitType.INDIVIDUAL },
+                    },
                     select: { amount: true },
                 });
                 const totalPaid = paid.reduce((s, e) => s + Number(e.amount), 0);
@@ -376,6 +415,24 @@ export class ParticipantsService {
                     where: { participantId: p.id },
                     select: { amount: true },
                 });
+                // Pagamentos: quem paga reduz débito, quem recebe reduz crédito
+                const paymentsMade = await this.prisma.payment.findMany({
+                    where: { tripId, fromParticipantId: p.id },
+                    select: { amount: true },
+                });
+                const totalPaidToOthers = paymentsMade.reduce(
+                    (sum, x) => sum + Number(x.amount),
+                    0,
+                );
+
+                const paymentsReceived = await this.prisma.payment.findMany({
+                    where: { tripId, toParticipantId: p.id },
+                    select: { amount: true },
+                });
+                const totalReceivedFromOthers = paymentsReceived.reduce(
+                    (sum, x) => sum + Number(x.amount),
+                    0,
+                );
                 const totalOwed = splits.reduce((s, x) => s + Number(x.amount), 0);
 
                 emailByParticipantUserId.set(p.user.id, p.user.email);
@@ -383,7 +440,7 @@ export class ParticipantsService {
                 return {
                     id: p.user.id,
                     name: p.user.name,
-                    balance: Math.round((totalPaid - totalOwed) * 100) / 100,
+                    balance: Math.round((totalPaid + totalPaidToOthers - totalReceivedFromOthers - totalOwed) * 100) / 100,
                 };
             }),
         );

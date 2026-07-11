@@ -59,7 +59,8 @@ export const ModelName = {
   Expense: 'Expense',
   ExpenseSplit: 'ExpenseSplit',
   RoadmapActivity: 'RoadmapActivity',
-  Reservation: 'Reservation'
+  Reservation: 'Reservation',
+  Payment: 'Payment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -219,6 +220,20 @@ export const ReservationScalarFieldEnum = {
 } as const
 
 export type ReservationScalarFieldEnum = (typeof ReservationScalarFieldEnum)[keyof typeof ReservationScalarFieldEnum]
+
+
+export const PaymentScalarFieldEnum = {
+  id: 'id',
+  tripId: 'tripId',
+  fromParticipantId: 'fromParticipantId',
+  toParticipantId: 'toParticipantId',
+  amount: 'amount',
+  paidAt: 'paidAt',
+  createdBy: 'createdBy',
+  notes: 'notes'
+} as const
+
+export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
 
 
 export const SortOrder = {

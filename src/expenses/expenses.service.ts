@@ -9,6 +9,7 @@ import { TripsService } from '../trips/trips.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { SplitType } from '../generated/prisma/client';
+import { CreatePaymentDto } from './dto/create-payment-dto';
 
 @Injectable()
 export class ExpensesService {
@@ -114,8 +115,11 @@ export class ExpensesService {
         });
 
         const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+        const sharedTotal = expenses
+            .filter((e) => e.splitType !== SplitType.INDIVIDUAL)
+            .reduce((sum, e) => sum + Number(e.amount), 0);
         const perPersonAverage =
-            participantCount > 0 ? totalSpent / participantCount : 0;
+            participantCount > 0 ? sharedTotal / participantCount : 0;
 
         // Maior despesa
         const largest = expenses.reduce(
@@ -173,11 +177,13 @@ export class ExpensesService {
         const splitType = dto.splitType ?? SplitType.EQUAL;
         let splits: { participantId: string; amount: number }[] = [];
 
-        if (splitType === SplitType.EQUAL) {
+        if (splitType === SplitType.INDIVIDUAL) {
+            // Cada um pagou o seu — não gera splits, não afeta acertos
+            splits = [];
+        } else if (splitType === SplitType.EQUAL) {
             let tripParticipantIds: string[];
 
             if (dto.splitParticipants && dto.splitParticipants.length > 0) {
-                // Frontend manda userIds — converte para TripParticipant.id
                 const found = await this.prisma.tripParticipant.findMany({
                     where: {
                         tripId,
@@ -187,7 +193,6 @@ export class ExpensesService {
                 });
                 tripParticipantIds = found.map((p) => p.id);
             } else {
-                // Divide entre todos — já são TripParticipant.ids
                 tripParticipantIds = allParticipants.map((p) => p.id);
             }
 
@@ -203,6 +208,7 @@ export class ExpensesService {
                 amount: Math.round(amountPerPerson * 100) / 100,
             }));
         } else {
+            // CUSTOM — mantém a lógica atual
             if (!dto.splitParticipants || dto.splitParticipants.length === 0) {
                 throw new BadRequestException(
                     'Divisão customizada requer os valores por participante',
@@ -220,7 +226,6 @@ export class ExpensesService {
                 );
             }
 
-            // Converte userIds → TripParticipant.ids para divisão customizada também
             const found = await this.prisma.tripParticipant.findMany({
                 where: {
                     tripId,
@@ -368,5 +373,41 @@ export class ExpensesService {
         });
 
         return { id: expense.id, receiptUrl: expense.receiptUrl };
+    }
+
+    async createPayment(tripId: string, userId: string, dto: CreatePaymentDto) {
+        // Resolve userIds → TripParticipant.ids
+        const [from, to] = await Promise.all([
+            this.prisma.tripParticipant.findFirst({
+                where: { userId: dto.fromUserId, tripId },
+            }),
+            this.prisma.tripParticipant.findFirst({
+                where: { userId: dto.toUserId, tripId },
+            }),
+        ]);
+        if (!from || !to) {
+            throw new NotFoundException('Participante não encontrado nessa viagem');
+        }
+
+        // Não permitir pagar a si mesmo
+        if (dto.fromUserId === dto.toUserId) {
+            throw new BadRequestException('Devedor e credor não podem ser a mesma pessoa');
+        }
+
+        // Autorização: só o devedor pode registrar
+        if (from.userId !== userId) {
+            throw new ForbiddenException('Só o próprio devedor pode marcar como pago');
+        }
+
+        return this.prisma.payment.create({
+            data: {
+                tripId,
+                fromParticipantId: from.id,   // TripParticipant.id resolvido
+                toParticipantId: to.id,       // TripParticipant.id resolvido
+                amount: dto.amount,
+                createdBy: userId,
+                notes: dto.notes,
+            },
+        });
     }
 }

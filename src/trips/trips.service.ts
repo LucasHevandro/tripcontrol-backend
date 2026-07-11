@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { TripStatus } from '../generated/prisma/client';
+import { SplitType } from '../generated/prisma/client';
 
 @Injectable()
 export class TripsService {
@@ -314,7 +315,11 @@ export class TripsService {
             participants.map(async (p) => {
                 // Quanto pagou
                 const paidExpenses = await this.prisma.expense.findMany({
-                    where: { tripId, paidById: p.userId },
+                    where: {
+                        tripId,
+                        paidById: p.userId,
+                        splitType: { not: SplitType.INDIVIDUAL },
+                    },
                     select: { amount: true },
                 });
                 const totalPaid = paidExpenses.reduce(
@@ -327,6 +332,25 @@ export class TripsService {
                     where: { participantId: p.id },
                     select: { amount: true },
                 });
+
+                // Pagamentos: quem paga reduz débito, quem recebe reduz crédito
+                const paymentsMade = await this.prisma.payment.findMany({
+                    where: { tripId, fromParticipantId: p.id },
+                    select: { amount: true },
+                });
+                const totalPaidToOthers = paymentsMade.reduce(
+                    (sum, x) => sum + Number(x.amount),
+                    0,
+                );
+
+                const paymentsReceived = await this.prisma.payment.findMany({
+                    where: { tripId, toParticipantId: p.id },
+                    select: { amount: true },
+                });
+                const totalReceivedFromOthers = paymentsReceived.reduce(
+                    (sum, x) => sum + Number(x.amount),
+                    0,
+                );
                 const totalOwed = splits.reduce(
                     (sum, s) => sum + Number(s.amount),
                     0,
@@ -335,7 +359,7 @@ export class TripsService {
                 return {
                     id: p.user.id,
                     name: p.user.name,
-                    balance: Math.round((totalPaid - totalOwed) * 100) / 100,
+                    balance: Math.round((totalPaid + totalPaidToOthers - totalReceivedFromOthers - totalOwed) * 100) / 100,
                 };
             }),
         );

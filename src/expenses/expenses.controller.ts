@@ -31,6 +31,8 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import * as client from 'src/generated/prisma/client';
+import { CreatePaymentDto } from './dto/create-payment-dto';
 
 @ApiTags('Expenses')
 @ApiBearerAuth()
@@ -122,5 +124,20 @@ export class ExpensesController {
         @UploadedFile() file: Express.Multer.File,
     ) {
         return this.expensesService.uploadReceipt(user.id, tripId, expenseId, file);
+    }
+}
+
+@Controller('trips/:tripId/payments')
+@UseGuards(JwtGuard)
+export class PaymentsController {
+    constructor(private readonly paymentsService: ExpensesService) { }
+
+    @Post()
+    async create(
+        @Param('tripId') tripId: string,
+        @CurrentUser() user: client.User,
+        @Body() dto: CreatePaymentDto,
+    ) {
+        return this.paymentsService.createPayment(tripId, user.id, dto);
     }
 }
