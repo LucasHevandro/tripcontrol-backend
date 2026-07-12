@@ -27,10 +27,14 @@ export type AggregateTrip = {
 }
 
 export type TripAvgAggregateOutputType = {
+  destinationLat: number | null
+  destinationLng: number | null
   budget: runtime.Decimal | null
 }
 
 export type TripSumAggregateOutputType = {
+  destinationLat: number | null
+  destinationLng: number | null
   budget: runtime.Decimal | null
 }
 
@@ -38,6 +42,8 @@ export type TripMinAggregateOutputType = {
   id: string | null
   name: string | null
   destination: string | null
+  destinationLat: number | null
+  destinationLng: number | null
   destinationType: $Enums.DestinationType | null
   startDate: Date | null
   endDate: Date | null
@@ -56,6 +62,8 @@ export type TripMaxAggregateOutputType = {
   id: string | null
   name: string | null
   destination: string | null
+  destinationLat: number | null
+  destinationLng: number | null
   destinationType: $Enums.DestinationType | null
   startDate: Date | null
   endDate: Date | null
@@ -74,6 +82,8 @@ export type TripCountAggregateOutputType = {
   id: number
   name: number
   destination: number
+  destinationLat: number
+  destinationLng: number
   destinationType: number
   startDate: number
   endDate: number
@@ -91,10 +101,14 @@ export type TripCountAggregateOutputType = {
 
 
 export type TripAvgAggregateInputType = {
+  destinationLat?: true
+  destinationLng?: true
   budget?: true
 }
 
 export type TripSumAggregateInputType = {
+  destinationLat?: true
+  destinationLng?: true
   budget?: true
 }
 
@@ -102,6 +116,8 @@ export type TripMinAggregateInputType = {
   id?: true
   name?: true
   destination?: true
+  destinationLat?: true
+  destinationLng?: true
   destinationType?: true
   startDate?: true
   endDate?: true
@@ -120,6 +136,8 @@ export type TripMaxAggregateInputType = {
   id?: true
   name?: true
   destination?: true
+  destinationLat?: true
+  destinationLng?: true
   destinationType?: true
   startDate?: true
   endDate?: true
@@ -138,6 +156,8 @@ export type TripCountAggregateInputType = {
   id?: true
   name?: true
   destination?: true
+  destinationLat?: true
+  destinationLng?: true
   destinationType?: true
   startDate?: true
   endDate?: true
@@ -243,6 +263,8 @@ export type TripGroupByOutputType = {
   id: string
   name: string
   destination: string
+  destinationLat: number | null
+  destinationLng: number | null
   destinationType: $Enums.DestinationType | null
   startDate: Date
   endDate: Date
@@ -284,6 +306,8 @@ export type TripWhereInput = {
   id?: Prisma.StringFilter<"Trip"> | string
   name?: Prisma.StringFilter<"Trip"> | string
   destination?: Prisma.StringFilter<"Trip"> | string
+  destinationLat?: Prisma.FloatNullableFilter<"Trip"> | number | null
+  destinationLng?: Prisma.FloatNullableFilter<"Trip"> | number | null
   destinationType?: Prisma.EnumDestinationTypeNullableFilter<"Trip"> | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFilter<"Trip"> | Date | string
   endDate?: Prisma.DateTimeFilter<"Trip"> | Date | string
@@ -308,6 +332,8 @@ export type TripOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   destination?: Prisma.SortOrder
+  destinationLat?: Prisma.SortOrderInput | Prisma.SortOrder
+  destinationLng?: Prisma.SortOrderInput | Prisma.SortOrder
   destinationType?: Prisma.SortOrderInput | Prisma.SortOrder
   startDate?: Prisma.SortOrder
   endDate?: Prisma.SortOrder
@@ -336,6 +362,8 @@ export type TripWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.TripWhereInput | Prisma.TripWhereInput[]
   name?: Prisma.StringFilter<"Trip"> | string
   destination?: Prisma.StringFilter<"Trip"> | string
+  destinationLat?: Prisma.FloatNullableFilter<"Trip"> | number | null
+  destinationLng?: Prisma.FloatNullableFilter<"Trip"> | number | null
   destinationType?: Prisma.EnumDestinationTypeNullableFilter<"Trip"> | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFilter<"Trip"> | Date | string
   endDate?: Prisma.DateTimeFilter<"Trip"> | Date | string
@@ -359,6 +387,8 @@ export type TripOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   destination?: Prisma.SortOrder
+  destinationLat?: Prisma.SortOrderInput | Prisma.SortOrder
+  destinationLng?: Prisma.SortOrderInput | Prisma.SortOrder
   destinationType?: Prisma.SortOrderInput | Prisma.SortOrder
   startDate?: Prisma.SortOrder
   endDate?: Prisma.SortOrder
@@ -385,6 +415,8 @@ export type TripScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Trip"> | string
   name?: Prisma.StringWithAggregatesFilter<"Trip"> | string
   destination?: Prisma.StringWithAggregatesFilter<"Trip"> | string
+  destinationLat?: Prisma.FloatNullableWithAggregatesFilter<"Trip"> | number | null
+  destinationLng?: Prisma.FloatNullableWithAggregatesFilter<"Trip"> | number | null
   destinationType?: Prisma.EnumDestinationTypeNullableWithAggregatesFilter<"Trip"> | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeWithAggregatesFilter<"Trip"> | Date | string
   endDate?: Prisma.DateTimeWithAggregatesFilter<"Trip"> | Date | string
@@ -403,6 +435,8 @@ export type TripCreateInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -427,6 +461,8 @@ export type TripUncheckedCreateInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -451,6 +487,8 @@ export type TripUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -475,6 +513,8 @@ export type TripUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -499,6 +539,8 @@ export type TripCreateManyInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -517,6 +559,8 @@ export type TripUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -535,6 +579,8 @@ export type TripUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -553,6 +599,8 @@ export type TripCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   destination?: Prisma.SortOrder
+  destinationLat?: Prisma.SortOrder
+  destinationLng?: Prisma.SortOrder
   destinationType?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
   endDate?: Prisma.SortOrder
@@ -568,6 +616,8 @@ export type TripCountOrderByAggregateInput = {
 }
 
 export type TripAvgOrderByAggregateInput = {
+  destinationLat?: Prisma.SortOrder
+  destinationLng?: Prisma.SortOrder
   budget?: Prisma.SortOrder
 }
 
@@ -575,6 +625,8 @@ export type TripMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   destination?: Prisma.SortOrder
+  destinationLat?: Prisma.SortOrder
+  destinationLng?: Prisma.SortOrder
   destinationType?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
   endDate?: Prisma.SortOrder
@@ -593,6 +645,8 @@ export type TripMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   destination?: Prisma.SortOrder
+  destinationLat?: Prisma.SortOrder
+  destinationLng?: Prisma.SortOrder
   destinationType?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
   endDate?: Prisma.SortOrder
@@ -608,12 +662,22 @@ export type TripMinOrderByAggregateInput = {
 }
 
 export type TripSumOrderByAggregateInput = {
+  destinationLat?: Prisma.SortOrder
+  destinationLng?: Prisma.SortOrder
   budget?: Prisma.SortOrder
 }
 
 export type TripScalarRelationFilter = {
   is?: Prisma.TripWhereInput
   isNot?: Prisma.TripWhereInput
+}
+
+export type NullableFloatFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type NullableEnumDestinationTypeFieldUpdateOperationsInput = {
@@ -724,6 +788,8 @@ export type TripCreateWithoutParticipantsInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -747,6 +813,8 @@ export type TripUncheckedCreateWithoutParticipantsInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -786,6 +854,8 @@ export type TripUpdateWithoutParticipantsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -809,6 +879,8 @@ export type TripUncheckedUpdateWithoutParticipantsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -832,6 +904,8 @@ export type TripCreateWithoutInvitesInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -855,6 +929,8 @@ export type TripUncheckedCreateWithoutInvitesInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -894,6 +970,8 @@ export type TripUpdateWithoutInvitesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -917,6 +995,8 @@ export type TripUncheckedUpdateWithoutInvitesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -940,6 +1020,8 @@ export type TripCreateWithoutExpensesInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -963,6 +1045,8 @@ export type TripUncheckedCreateWithoutExpensesInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -1002,6 +1086,8 @@ export type TripUpdateWithoutExpensesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1025,6 +1111,8 @@ export type TripUncheckedUpdateWithoutExpensesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1048,6 +1136,8 @@ export type TripCreateWithoutActivitiesInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -1071,6 +1161,8 @@ export type TripUncheckedCreateWithoutActivitiesInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -1110,6 +1202,8 @@ export type TripUpdateWithoutActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1133,6 +1227,8 @@ export type TripUncheckedUpdateWithoutActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1156,6 +1252,8 @@ export type TripCreateWithoutReservationsInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -1179,6 +1277,8 @@ export type TripUncheckedCreateWithoutReservationsInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -1218,6 +1318,8 @@ export type TripUpdateWithoutReservationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1241,6 +1343,8 @@ export type TripUncheckedUpdateWithoutReservationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1264,6 +1368,8 @@ export type TripCreateWithoutPaymentsInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -1287,6 +1393,8 @@ export type TripUncheckedCreateWithoutPaymentsInput = {
   id?: string
   name: string
   destination: string
+  destinationLat?: number | null
+  destinationLng?: number | null
   destinationType?: $Enums.DestinationType | null
   startDate: Date | string
   endDate: Date | string
@@ -1326,6 +1434,8 @@ export type TripUpdateWithoutPaymentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1349,6 +1459,8 @@ export type TripUncheckedUpdateWithoutPaymentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   destination?: Prisma.StringFieldUpdateOperationsInput | string
+  destinationLat?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  destinationLng?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   destinationType?: Prisma.NullableEnumDestinationTypeFieldUpdateOperationsInput | $Enums.DestinationType | null
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1448,6 +1560,8 @@ export type TripSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   id?: boolean
   name?: boolean
   destination?: boolean
+  destinationLat?: boolean
+  destinationLng?: boolean
   destinationType?: boolean
   startDate?: boolean
   endDate?: boolean
@@ -1473,6 +1587,8 @@ export type TripSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   name?: boolean
   destination?: boolean
+  destinationLat?: boolean
+  destinationLng?: boolean
   destinationType?: boolean
   startDate?: boolean
   endDate?: boolean
@@ -1491,6 +1607,8 @@ export type TripSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   name?: boolean
   destination?: boolean
+  destinationLat?: boolean
+  destinationLng?: boolean
   destinationType?: boolean
   startDate?: boolean
   endDate?: boolean
@@ -1509,6 +1627,8 @@ export type TripSelectScalar = {
   id?: boolean
   name?: boolean
   destination?: boolean
+  destinationLat?: boolean
+  destinationLng?: boolean
   destinationType?: boolean
   startDate?: boolean
   endDate?: boolean
@@ -1523,7 +1643,7 @@ export type TripSelectScalar = {
   updatedAt?: boolean
 }
 
-export type TripOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "destination" | "destinationType" | "startDate" | "endDate" | "status" | "tripType" | "budget" | "description" | "emoji" | "bannerColor" | "inviteToken" | "createdAt" | "updatedAt", ExtArgs["result"]["trip"]>
+export type TripOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "destination" | "destinationLat" | "destinationLng" | "destinationType" | "startDate" | "endDate" | "status" | "tripType" | "budget" | "description" | "emoji" | "bannerColor" | "inviteToken" | "createdAt" | "updatedAt", ExtArgs["result"]["trip"]>
 export type TripInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   payments?: boolean | Prisma.Trip$paymentsArgs<ExtArgs>
   participants?: boolean | Prisma.Trip$participantsArgs<ExtArgs>
@@ -1550,6 +1670,8 @@ export type $TripPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     id: string
     name: string
     destination: string
+    destinationLat: number | null
+    destinationLng: number | null
     destinationType: $Enums.DestinationType | null
     startDate: Date
     endDate: Date
@@ -1994,6 +2116,8 @@ export interface TripFieldRefs {
   readonly id: Prisma.FieldRef<"Trip", 'String'>
   readonly name: Prisma.FieldRef<"Trip", 'String'>
   readonly destination: Prisma.FieldRef<"Trip", 'String'>
+  readonly destinationLat: Prisma.FieldRef<"Trip", 'Float'>
+  readonly destinationLng: Prisma.FieldRef<"Trip", 'Float'>
   readonly destinationType: Prisma.FieldRef<"Trip", 'DestinationType'>
   readonly startDate: Prisma.FieldRef<"Trip", 'DateTime'>
   readonly endDate: Prisma.FieldRef<"Trip", 'DateTime'>

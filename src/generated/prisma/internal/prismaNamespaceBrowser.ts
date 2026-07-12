@@ -114,6 +114,8 @@ export const TripScalarFieldEnum = {
   id: 'id',
   name: 'name',
   destination: 'destination',
+  destinationLat: 'destinationLat',
+  destinationLng: 'destinationLng',
   destinationType: 'destinationType',
   startDate: 'startDate',
   endDate: 'endDate',
