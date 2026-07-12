@@ -49,6 +49,16 @@ export class CreateTripDto {
   @MinLength(2)
   destination: string;
 
+  @ApiPropertyOptional({ example: -30.0277 })
+  @IsNumber()
+  @IsOptional()
+  destinationLat?: number;
+
+  @ApiPropertyOptional({ example: -51.2288 })
+  @IsNumber()
+  @IsOptional()
+  destinationLng?: number;
+
   @ApiPropertyOptional({ enum: DestinationType })
   @IsOptional()
   @IsEnum(DestinationType)

@@ -73,6 +73,8 @@ model Trip {
   id              String          @id @default(uuid())
   name            String
   destination     String
+  destinationLat  Float?
+  destinationLng  Float?
   destinationType DestinationType?
   startDate       DateTime
   endDate         DateTime

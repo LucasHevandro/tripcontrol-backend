@@ -10,7 +10,7 @@ import { SplitType, TripStatus } from '../generated/prisma/enums';
 
 @Injectable()
 export class TripsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // ─── Listar viagens do usuário ────────────────────────────────────────────
 
@@ -82,6 +82,8 @@ export class TripsService {
       data: {
         name: dto.name,
         destination: dto.destination,
+        destinationLat: dto.destinationLat,
+        destinationLng: dto.destinationLng,
         destinationType: dto.destinationType,
         startDate: new Date(dto.startDate),
         endDate: new Date(dto.endDate),
@@ -354,7 +356,7 @@ export class TripsService {
       owedByParticipant.set(
         split.participantId,
         (owedByParticipant.get(split.participantId) ?? 0) +
-          Number(split.amount),
+        Number(split.amount),
       );
     });
 
@@ -362,12 +364,12 @@ export class TripsService {
       paidToOthersByParticipant.set(
         payment.fromParticipantId,
         (paidToOthersByParticipant.get(payment.fromParticipantId) ?? 0) +
-          Number(payment.amount),
+        Number(payment.amount),
       );
       receivedByParticipant.set(
         payment.toParticipantId,
         (receivedByParticipant.get(payment.toParticipantId) ?? 0) +
-          Number(payment.amount),
+        Number(payment.amount),
       );
     });
 
@@ -388,7 +390,7 @@ export class TripsService {
               totalOwed +
               totalPaidToOthers -
               totalReceivedFromOthers) *
-              100,
+            100,
           ) / 100,
       };
     });
