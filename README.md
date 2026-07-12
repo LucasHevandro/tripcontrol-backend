@@ -1,367 +1,115 @@
-# ✈️ TripControl API
+# TripControl API
 
-Backend da aplicação **TripControl**, uma plataforma para planejamento colaborativo de viagens, gerenciamento de participantes, controle de despesas, reservas e organização do roteiro.
+Backend da aplicação TripControl, uma plataforma para planejamento colaborativo de viagens com participantes, despesas, pagamentos, reservas e roteiro.
 
-O projeto foi desenvolvido utilizando **NestJS**, **Prisma** e **PostgreSQL**, seguindo uma arquitetura modular e boas práticas para construção de APIs REST.
-
----
-
-# Tecnologias
+## Tecnologias
 
 - NestJS
 - TypeScript
 - Prisma ORM
 - PostgreSQL
-- JWT Authentication
+- JWT e refresh token
 - Passport
-- Swagger (OpenAPI)
+- Swagger/OpenAPI
 - Class Validator
-- Class Transformer
 - Multer
 - Helmet
+- Resend
 
----
+## Módulos
 
-# Arquitetura
+- `auth`: cadastro, login, Google Login, refresh token, logout e usuário autenticado.
+- `users`: perfil, senha, preferências e avatar.
+- `trips`: criação, listagem, detalhes, dashboard, atualização e remoção de viagens.
+- `participants`: participantes, convites, entrada por token, saldos e notificações de acerto.
+- `expenses`: despesas, divisão igual/customizada/individual, comprovantes e pagamentos entre participantes.
+- `reservations`: reservas de hotel, voo, carro e passeio.
+- `roadmap`: roteiro diário de atividades.
+- `email`: envio de convites e lembretes.
+- `prisma`: conexão com banco e client gerado.
 
-```
-src
-├── auth
-├── common
-├── expenses
-├── invites
-├── prisma
-├── reservations
-├── roadmap
-├── trips
-├── users
-└── generated
-```
+## Requisitos
 
-Cada módulo é responsável por uma área de negócio da aplicação.
+- Node.js compatível com NestJS 11
+- Yarn ou npm
+- PostgreSQL
 
-Exemplo:
+## Configuração
 
-- **Auth** → autenticação e autorização
-- **Users** → gerenciamento de usuários
-- **Trips** → gerenciamento de viagens
-- **Expenses** → controle financeiro
-- **Reservations** → hospedagem, transporte e reservas
-- **Roadmap** → roteiro de atividades
-- **Invites** → convite de participantes
-
----
-
-# Funcionalidades
-
-## Autenticação
-
-- Cadastro de usuário
-- Login
-- Refresh Token
-- Alteração de senha
-- Perfil do usuário
-
----
-
-## Viagens
-
-- Criar viagem
-- Editar viagem
-- Excluir viagem
-- Listar viagens
-- Compartilhar viagem através de convite
-- Definir orçamento
-- Tipo de viagem
-- Status da viagem
-
----
-
-## Participantes
-
-- Adicionar participantes
-- Remover participantes
-- Aceitar convite
-- Controle de permissões
-
----
-
-## Despesas
-
-- Cadastro de despesas
-- Categorias
-- Pagador da despesa
-- Divisão igualitária
-- Divisão personalizada
-- Histórico financeiro
-- Resumo de gastos
-
----
-
-## Reservas
-
-Suporte para diferentes tipos de reservas.
-
-Exemplos:
-
-- Hotel
-- Airbnb
-- Passagens
-- Aluguel de veículo
-- Outros
-
----
-
-## Roteiro
-
-- Cadastro de atividades
-- Organização por data
-- Horários
-- Localização
-- Observações
-
----
-
-# Banco de Dados
-
-O projeto utiliza **PostgreSQL** com **Prisma ORM**.
-
-Principais entidades:
-
-- User
-- RefreshToken
-- Trip
-- TripParticipant
-- Expense
-- ExpenseSplit
-- Reservation
-- RoadmapItem
-- Invite
-
----
-
-# Instalação
-
-## Clone o projeto
-
-```bash
-git clone <repositorio>
-
-cd tripcontrol-backend
-```
-
----
-
-## Instale as dependências
-
-```bash
-npm install
-```
-
----
-
-## Configure o arquivo .env
-
-Crie um arquivo `.env` na raiz do projeto.
-
-Exemplo:
+Crie um arquivo `.env` na raiz do projeto:
 
 ```env
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/tripcontrol"
-
-JWT_SECRET=seu_jwt_secret
-
-JWT_REFRESH_SECRET=seu_refresh_secret
-
+PORT=3001
+DATABASE_URL=postgresql://usuario:senha@localhost:5432/tripcontrol
+JWT_SECRET=uma-string-longa-com-no-minimo-32-caracteres
+JWT_REFRESH_SECRET=outra-string-longa-com-no-minimo-32-caracteres
 JWT_EXPIRES_IN=15m
-
-JWT_REFRESH_EXPIRES_IN=30d
-
+JWT_REFRESH_EXPIRES_IN=7d
 FRONTEND_URL=http://localhost:3000
+GOOGLE_CLIENT_ID=
+RESEND_API_KEY=
+EMAIL_FROM=
 ```
 
----
-
-# Banco de Dados
-
-Gerar o client Prisma
+Para subir um PostgreSQL local:
 
 ```bash
-npx prisma generate
+docker compose up -d
 ```
 
-Executar migrations
+Instale dependências e prepare o banco:
 
 ```bash
-npx prisma migrate dev
+yarn install
+yarn prisma generate
+yarn prisma migrate dev
 ```
 
-Caso queira visualizar o banco:
+## Execução
 
 ```bash
-npx prisma studio
+yarn start:dev
 ```
 
----
+A API sobe em `http://localhost:3001/api/v1` por padrão.
 
-# Executando o projeto
+Swagger:
 
-Modo desenvolvimento
+```text
+http://localhost:3001/api/docs
+```
+
+## Scripts
 
 ```bash
-npm run start:dev
+yarn build
+yarn test
+yarn test:e2e
+yarn lint
+yarn format
 ```
 
-Modo produção
+## Segurança
 
-```bash
-npm run build
+- Senhas são armazenadas com `bcrypt`.
+- Refresh tokens são armazenados como hash SHA-256, não em texto puro.
+- Rotas privadas usam JWT guard.
+- DTOs são validados globalmente com whitelist e bloqueio de campos extras.
+- Helmet é habilitado no bootstrap da aplicação.
 
-npm run start:prod
-```
+## Fluxo Financeiro
 
----
+- Despesas podem ser divididas igualmente, customizadas por participante ou marcadas como individuais.
+- Ao editar valor, tipo de divisão ou participantes de uma despesa, os splits são recalculados.
+- Pagamentos registrados entre participantes reduzem os saldos pendentes.
+- Cálculos de saldo usam consultas em lote para evitar leituras repetidas por participante.
 
-# Swagger
+## Testes
 
-Após iniciar a aplicação, a documentação estará disponível em:
+A suíte atual cobre os principais fluxos de domínio:
 
-```
-http://localhost:3000/api
-```
-
-*(A URL pode variar conforme a configuração do projeto.)*
-
----
-
-# Scripts
-
-Iniciar aplicação
-
-```bash
-npm run start
-```
-
-Modo desenvolvimento
-
-```bash
-npm run start:dev
-```
-
-Build
-
-```bash
-npm run build
-```
-
-Lint
-
-```bash
-npm run lint
-```
-
-Formatar código
-
-```bash
-npm run format
-```
-
-Testes
-
-```bash
-npm test
-```
-
-Cobertura
-
-```bash
-npm run test:cov
-```
-
----
-
-# Fluxo de autenticação
-
-```
-Register
-      │
-      ▼
- Login
-      │
-      ▼
-Access Token
-      │
-      ▼
-Requisições autenticadas
-      │
-      ▼
-Refresh Token
-      │
-      ▼
-Novo Access Token
-```
-
----
-
-# Segurança
-
-A API utiliza:
-
-- JWT Authentication
-- Refresh Token
-- Password Hash (bcrypt)
-- Helmet
-- Validação de DTOs
-- Guards do NestJS
-- Pipes de validação
-
----
-
-# Organização do projeto
-
-O projeto segue arquitetura modular do NestJS.
-
-Cada módulo contém:
-
-```
-module
-
-controller
-
-service
-
-dto
-
-entities (quando necessário)
-
-guards
-
-decorators
-```
-
----
-
-# Convenções
-
-- Controllers possuem apenas responsabilidade HTTP.
-- Services concentram toda regra de negócio.
-- DTOs realizam validações de entrada.
-- Prisma é responsável pelo acesso ao banco.
-- Todas as rotas protegidas utilizam JWT.
-
----
-
-# Roadmap
-
-Funcionalidades previstas para versões futuras:
-
-- Notificações Push
-- Compartilhamento em tempo real
-- Chat entre participantes
-- Integração com Google Maps
-- Integração com Google Calendar
-- Upload para armazenamento em nuvem
-- Conversão automática de moedas
-- Controle offline
-- Dashboard financeiro
-- Relatórios de viagem
+- autenticação e hash de refresh token;
+- criação de viagem com organizador;
+- cálculo de splits de despesas;
+- registro de pagamentos;
+- cálculo de acertos entre participantes.
