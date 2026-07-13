@@ -10,7 +10,7 @@ import { TripsService } from '../trips/trips.service';
 import { InviteByEmailDto } from './dto/invite-by-email.dto';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
-import { SplitType } from '../generated/prisma/enums';
+import { BalanceCalculatorService } from '../finances/balance.service';
 
 type ParticipantForBalance = {
   id: string;
@@ -32,7 +32,8 @@ export class ParticipantsService {
     private tripsService: TripsService,
     private config: ConfigService,
     private email: EmailService,
-  ) {}
+    private readonly balanceCalc: BalanceCalculatorService,
+  ) { }
 
   /** Monta o link de convite usando a URL do frontend configurada por ambiente */
   private buildInviteLink(inviteToken: string | undefined): string {
@@ -369,93 +370,26 @@ export class ParticipantsService {
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
-
   private async calculateParticipantBalances(
     tripId: string,
     participants: ParticipantForBalance[],
   ) {
-    const participantIds = participants.map((participant) => participant.id);
-
-    const [expenses, splits, payments] = await Promise.all([
-      this.prisma.expense.findMany({
-        where: {
-          tripId,
-          splitType: { not: SplitType.INDIVIDUAL },
-        },
-        select: { paidById: true, amount: true },
-      }),
-      this.prisma.expenseSplit.findMany({
-        where: { participantId: { in: participantIds } },
-        select: { participantId: true, amount: true },
-      }),
-      this.prisma.payment.findMany({
-        where: { tripId },
-        select: {
-          fromParticipantId: true,
-          toParticipantId: true,
-          amount: true,
-        },
-      }),
-    ]);
-
-    const paidByUser = new Map<string, number>();
-    const owedByParticipant = new Map<string, number>();
-    const paidToOthersByParticipant = new Map<string, number>();
-    const receivedByParticipant = new Map<string, number>();
-
-    expenses.forEach((expense) => {
-      paidByUser.set(
-        expense.paidById,
-        (paidByUser.get(expense.paidById) ?? 0) + Number(expense.amount),
-      );
-    });
-
-    splits.forEach((split) => {
-      owedByParticipant.set(
-        split.participantId,
-        (owedByParticipant.get(split.participantId) ?? 0) +
-          Number(split.amount),
-      );
-    });
-
-    payments.forEach((payment) => {
-      paidToOthersByParticipant.set(
-        payment.fromParticipantId,
-        (paidToOthersByParticipant.get(payment.fromParticipantId) ?? 0) +
-          Number(payment.amount),
-      );
-      receivedByParticipant.set(
-        payment.toParticipantId,
-        (receivedByParticipant.get(payment.toParticipantId) ?? 0) +
-          Number(payment.amount),
-      );
-    });
+    const balances = await this.balanceCalc.calculateBalances(
+      tripId,
+      participants.map((p) => ({ id: p.id, userId: p.userId })),
+    );
 
     return participants.map((participant) => {
-      const totalPaid = paidByUser.get(participant.userId) ?? 0;
-      const totalOwed = owedByParticipant.get(participant.id) ?? 0;
-      const totalPaidToOthers =
-        paidToOthersByParticipant.get(participant.id) ?? 0;
-      const totalReceivedFromOthers =
-        receivedByParticipant.get(participant.id) ?? 0;
-      const balance =
-        Math.round(
-          (totalPaid -
-            totalOwed +
-            totalPaidToOthers -
-            totalReceivedFromOthers) *
-            100,
-        ) / 100;
-
+      const b = balances.get(participant.id)!;
       return {
         id: participant.user.id,
         name: participant.user.name,
         email: participant.user.email,
         avatarUrl: participant.user.avatarUrl,
         role: participant.role,
-        totalPaid: Math.round(totalPaid * 100) / 100,
-        individualQuota: Math.round(totalOwed * 100) / 100,
-        balance,
+        totalPaid: b.totalPaid,
+        individualQuota: b.individualQuota,
+        balance: b.balance,
         joinedAt: participant.joinedAt,
       };
     });

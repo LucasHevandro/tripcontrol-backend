@@ -17,7 +17,7 @@ export class ExpensesService {
   constructor(
     private prisma: PrismaService,
     private tripsService: TripsService,
-  ) {}
+  ) { }
 
   // ─── Listar despesas ──────────────────────────────────────────────────────
   async findAll(
@@ -251,9 +251,9 @@ export class ExpensesService {
     const participants =
       shouldRebuildSplits || paidById
         ? await this.prisma.tripParticipant.findMany({
-            where: { tripId },
-            select: { id: true, userId: true },
-          })
+          where: { tripId },
+          select: { id: true, userId: true },
+        })
         : [];
 
     if (
@@ -265,11 +265,11 @@ export class ExpensesService {
 
     const splits = shouldRebuildSplits
       ? buildExpenseSplits({
-          amount: nextAmount,
-          splitType: nextSplitType,
-          splitParticipants,
-          tripParticipants: participants,
-        })
+        amount: nextAmount,
+        splitType: nextSplitType,
+        splitParticipants,
+        tripParticipants: participants,
+      })
       : undefined;
 
     return this.prisma.$transaction(async (tx) => {
@@ -399,5 +399,71 @@ export class ExpensesService {
         notes: dto.notes,
       },
     });
+  }
+
+  async findAllPayments(tripId: string, userId: string) {
+    // Autorização: só participante da viagem pode ver o histórico
+    await this.assertMember(tripId, userId);
+
+    const payments = await this.prisma.payment.findMany({
+      where: { tripId },
+      include: {
+        fromParticipant: {
+          select: {
+            id: true,
+            user: { select: { id: true, name: true, avatarUrl: true } },
+          },
+        },
+        toParticipant: {
+          select: {
+            id: true,
+            user: { select: { id: true, name: true, avatarUrl: true } },
+          },
+        },
+      },
+      orderBy: { paidAt: 'desc' },
+    });
+
+    return payments.map((p) => ({
+      id: p.id,
+      amount: Number(p.amount),
+      paidAt: p.paidAt.toISOString(),
+      notes: p.notes,
+      canDelete: p.createdBy === userId,
+      from: {
+        userId: p.fromParticipant.user.id,
+        name: p.fromParticipant.user.name,
+        avatarUrl: p.fromParticipant.user.avatarUrl,
+      },
+      to: {
+        userId: p.toParticipant.user.id,
+        name: p.toParticipant.user.name,
+        avatarUrl: p.toParticipant.user.avatarUrl,
+      },
+    }));
+  }
+
+  async deletePayment(tripId: string, paymentId: string, userId: string) {
+    const payment = await this.prisma.payment.findFirst({
+      where: { id: paymentId, tripId },
+    });
+    if (!payment) throw new NotFoundException('Pagamento não encontrado');
+
+    if (payment.createdBy !== userId) {
+      throw new ForbiddenException(
+        'Só quem registrou o pagamento pode desfazê-lo',
+      );
+    }
+
+    await this.prisma.payment.delete({ where: { id: paymentId } });
+  }
+
+  private async assertMember(tripId: string, userId: string): Promise<void> {
+    const participant = await this.prisma.tripParticipant.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+    });
+    if (!participant) {
+      throw new ForbiddenException('Você não é participante dessa viagem');
+    }
   }
 }

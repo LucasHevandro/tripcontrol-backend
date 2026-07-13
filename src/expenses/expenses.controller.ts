@@ -6,7 +6,6 @@ import {
   Delete,
   Body,
   Param,
-  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -38,7 +37,7 @@ import { CreatePaymentDto } from './dto/create-payment-dto';
 @UseGuards(JwtGuard)
 @Controller('trips/:tripId/expenses')
 export class ExpensesController {
-  constructor(private expensesService: ExpensesService) {}
+  constructor(private expensesService: ExpensesService) { }
 
   @Get()
   @ApiOperation({ summary: 'Listar despesas da viagem' })
@@ -129,7 +128,7 @@ export class ExpensesController {
 @Controller('trips/:tripId/payments')
 @UseGuards(JwtGuard)
 export class PaymentsController {
-  constructor(private readonly paymentsService: ExpensesService) {}
+  constructor(private readonly paymentsService: ExpensesService) { }
 
   @Post()
   async create(
@@ -138,5 +137,25 @@ export class PaymentsController {
     @Body() dto: CreatePaymentDto,
   ) {
     return this.paymentsService.createPayment(tripId, user.id, dto);
+  }
+
+  // ← novo
+  @Get()
+  async findAll(
+    @Param('tripId') tripId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.paymentsService.findAllPayments(tripId, user.id);
+  }
+
+  // ← novo
+  @Delete(':paymentId')
+  @HttpCode(204)
+  async remove(
+    @Param('tripId') tripId: string,
+    @Param('paymentId') paymentId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    await this.paymentsService.deletePayment(tripId, paymentId, user.id);
   }
 }

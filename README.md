@@ -1,42 +1,61 @@
-# TripControl API
+# ✈️ TripControl API
 
-Backend da aplicação TripControl, uma plataforma para planejamento colaborativo de viagens com participantes, despesas, pagamentos, reservas e roteiro.
+> O backend que faz o TripControl funcionar — cuidando de tudo que acontece nos bastidores para que planejar viagens em grupo seja simples e sem dor de cabeça.
 
-## Tecnologias
+O TripControl é uma plataforma de planejamento colaborativo de viagens. Aqui você encontra o código da API que gerencia participantes, despesas, pagamentos, reservas, roteiros e muito mais.
 
-- NestJS
-- TypeScript
-- Prisma ORM
-- PostgreSQL
-- JWT e refresh token
-- Passport
-- Swagger/OpenAPI
-- Class Validator
-- Multer
-- Helmet
-- Resend
+---
 
-## Módulos
+## 🛠️ Stack Tecnológica
 
-- `auth`: cadastro, login, Google Login, refresh token, logout e usuário autenticado.
-- `users`: perfil, senha, preferências e avatar.
-- `trips`: criação, listagem, detalhes, dashboard, atualização e remoção de viagens.
-- `participants`: participantes, convites, entrada por token, saldos e notificações de acerto.
-- `expenses`: despesas, divisão igual/customizada/individual, comprovantes e pagamentos entre participantes.
-- `reservations`: reservas de hotel, voo, carro e passeio.
-- `roadmap`: roteiro diário de atividades.
-- `email`: envio de convites e lembretes.
-- `prisma`: conexão com banco e client gerado.
+| Categoria | Tecnologia |
+|---|---|
+| Framework | NestJS 11 + TypeScript |
+| Banco de Dados | PostgreSQL + Prisma ORM |
+| Autenticação | JWT (access + refresh token) · Passport · Google Login |
+| Documentação | Swagger / OpenAPI |
+| Validação | Class Validator + Class Transformer |
+| Upload | Multer |
+| Segurança | Helmet · bcrypt · SHA-256 |
+| E-mail | Resend |
 
-## Requisitos
+---
 
-- Node.js compatível com NestJS 11
-- Yarn ou npm
-- PostgreSQL
+## 📦 Módulos
 
-## Configuração
+O projeto é organizado em módulos bem definidos, cada um com sua responsabilidade:
 
-Crie um arquivo `.env` na raiz do projeto:
+- **Auth** — Cadastro, login, login com Google, refresh token, logout e identificação do usuário autenticado.
+- **Users** — Perfil do usuário, alteração de senha, preferências e upload de avatar.
+- **Trips** — Criação, listagem, detalhes, dashboard, edição e remoção de viagens.
+- **Participants** — Gerenciamento de participantes, convites, entrada por link/token, saldos e notificações de acerto financeiro.
+- **Expenses** — Registro de despesas com divisão igual, customizada ou individual. Inclui comprovantes e pagamentos entre participantes.
+- **Reservations** — Reservas de hotel, voo, aluguel de carro e passeios.
+- **Roadmap** — Roteiro diário com atividades organizadas por dia de viagem.
+- **Email** — Envio de convites e lembretes por e-mail via Resend.
+- **Prisma** — Módulo de conexão com o banco e client gerado pelo Prisma.
+
+---
+
+## ⚡ Início Rápido
+
+### Pré-requisitos
+
+- **Node.js** compatível com NestJS 11
+- **Yarn** (ou npm, se preferir)
+- **PostgreSQL** rodando localmente ou via Docker
+
+### 1. Clone e instale as dependências
+
+```bash
+git clone <url-do-repositorio>
+cd tripcontrol-backend
+yarn install
+```
+
+### 2. Configure as variáveis de ambiente
+
+Crie um arquivo `.env` na raiz do projeto (ou copie o `.env.example`):
 
 ```env
 PORT=3001
@@ -51,65 +70,92 @@ RESEND_API_KEY=
 EMAIL_FROM=
 ```
 
-Para subir um PostgreSQL local:
+### 3. Suba o banco de dados
+
+Se quiser usar Docker, é só rodar:
 
 ```bash
 docker compose up -d
 ```
 
-Instale dependências e prepare o banco:
+### 4. Prepare o Prisma e rode as migrations
 
 ```bash
-yarn install
 yarn prisma generate
 yarn prisma migrate dev
 ```
 
-## Execução
+### 5. Inicie o servidor 🚀
 
 ```bash
 yarn start:dev
 ```
 
-A API sobe em `http://localhost:3001/api/v1` por padrão.
+A API estará disponível em **http://localhost:3001/api/v1**
 
-Swagger:
+Para explorar os endpoints com o Swagger, acesse:
+**http://localhost:3001/api/docs**
 
-```text
-http://localhost:3001/api/docs
-```
+---
 
-## Scripts
+## 📋 Scripts Disponíveis
+
+| Comando | O que faz |
+|---|---|
+| `yarn start:dev` | Inicia o servidor em modo de desenvolvimento (com hot reload) |
+| `yarn build` | Compila o projeto para produção |
+| `yarn start:prod` | Roda a versão compilada |
+| `yarn test` | Executa os testes unitários |
+| `yarn test:e2e` | Executa os testes end-to-end |
+| `yarn test:cov` | Gera relatório de cobertura de testes |
+| `yarn lint` | Verifica e corrige problemas de lint |
+| `yarn format` | Formata o código com Prettier |
+
+---
+
+## 🔒 Segurança
+
+A segurança não foi um detalhe de última hora — ela está presente em cada camada:
+
+- **Senhas** são armazenadas com hash bcrypt (nunca em texto puro).
+- **Refresh tokens** são salvos como hash SHA-256 no banco, garantindo que mesmo com acesso ao banco, os tokens não possam ser reutilizados.
+- **Rotas privadas** são protegidas por JWT guard via Passport.
+- **DTOs** são validados globalmente com whitelist e bloqueio automático de campos desconhecidos — nada passa sem ser esperado.
+- **Helmet** está habilitado no bootstrap da aplicação, adicionando headers de segurança HTTP.
+
+---
+
+## 💰 Fluxo Financeiro
+
+O controle financeiro é uma das partes mais importantes do TripControl. Veja como funciona:
+
+1. **Divisão flexível** — Despesas podem ser divididas igualmente entre todos, com valores customizados por participante, ou marcadas como individuais.
+2. **Recálculo automático** — Ao editar o valor, o tipo de divisão ou os participantes de uma despesa, os splits são recalculados automaticamente.
+3. **Pagamentos entre participantes** — Pagamentos registrados entre participantes reduzem os saldos pendentes em tempo real.
+4. **Performance** — Os cálculos de saldo usam consultas em lote, evitando leituras repetidas por participante e mantendo tudo rápido mesmo com muitos dados.
+
+---
+
+## 🧪 Testes
+
+A suíte de testes cobre os principais fluxos de domínio para garantir que nada quebre silenciosamente:
+
+- ✅ Autenticação e hash de refresh token
+- ✅ Criação de viagem com organizador
+- ✅ Cálculo de splits de despesas
+- ✅ Registro de pagamentos
+- ✅ Cálculo de acertos entre participantes
 
 ```bash
-yarn build
+# Rode os testes
 yarn test
-yarn test:e2e
-yarn lint
-yarn format
+
+# Veja a cobertura
+yarn test:cov
 ```
 
-## Segurança
+---
 
-- Senhas são armazenadas com `bcrypt`.
-- Refresh tokens são armazenados como hash SHA-256, não em texto puro.
-- Rotas privadas usam JWT guard.
-- DTOs são validados globalmente com whitelist e bloqueio de campos extras.
-- Helmet é habilitado no bootstrap da aplicação.
+## 📄 Licença
 
-## Fluxo Financeiro
-
-- Despesas podem ser divididas igualmente, customizadas por participante ou marcadas como individuais.
-- Ao editar valor, tipo de divisão ou participantes de uma despesa, os splits são recalculados.
-- Pagamentos registrados entre participantes reduzem os saldos pendentes.
-- Cálculos de saldo usam consultas em lote para evitar leituras repetidas por participante.
-
-## Testes
-
-A suíte atual cobre os principais fluxos de domínio:
-
-- autenticação e hash de refresh token;
-- criação de viagem com organizador;
-- cálculo de splits de despesas;
-- registro de pagamentos;
-- cálculo de acertos entre participantes.
+Projeto privado — uso restrito.
