@@ -6,11 +6,12 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
-import { SplitType, TripStatus } from '../generated/prisma/enums';
+import { TripStatus } from '../generated/prisma/enums';
+import { BalanceCalculatorService } from '../finances/balance.service';
 
 @Injectable()
 export class TripsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService, private balanceCalc: BalanceCalculatorService) { }
 
   // ─── Listar viagens do usuário ────────────────────────────────────────────
 
@@ -319,80 +320,15 @@ export class TripsService {
       },
     });
 
-    const participantIds = participants.map((participant) => participant.id);
+    const balances = await this.balanceCalc.calculateBalances(
+      tripId,
+      participants.map((p) => ({ id: p.id, userId: p.userId })),
+    );
 
-    const [expenses, splits, payments] = await Promise.all([
-      this.prisma.expense.findMany({
-        where: { tripId, splitType: { not: SplitType.INDIVIDUAL } },
-        select: { paidById: true, amount: true },
-      }),
-      this.prisma.expenseSplit.findMany({
-        where: { participantId: { in: participantIds } },
-        select: { participantId: true, amount: true },
-      }),
-      this.prisma.payment.findMany({
-        where: { tripId },
-        select: {
-          fromParticipantId: true,
-          toParticipantId: true,
-          amount: true,
-        },
-      }),
-    ]);
-
-    const paidByUser = new Map<string, number>();
-    const owedByParticipant = new Map<string, number>();
-    const paidToOthersByParticipant = new Map<string, number>();
-    const receivedByParticipant = new Map<string, number>();
-
-    expenses.forEach((expense) => {
-      paidByUser.set(
-        expense.paidById,
-        (paidByUser.get(expense.paidById) ?? 0) + Number(expense.amount),
-      );
-    });
-
-    splits.forEach((split) => {
-      owedByParticipant.set(
-        split.participantId,
-        (owedByParticipant.get(split.participantId) ?? 0) +
-        Number(split.amount),
-      );
-    });
-
-    payments.forEach((payment) => {
-      paidToOthersByParticipant.set(
-        payment.fromParticipantId,
-        (paidToOthersByParticipant.get(payment.fromParticipantId) ?? 0) +
-        Number(payment.amount),
-      );
-      receivedByParticipant.set(
-        payment.toParticipantId,
-        (receivedByParticipant.get(payment.toParticipantId) ?? 0) +
-        Number(payment.amount),
-      );
-    });
-
-    return participants.map((participant) => {
-      const totalPaid = paidByUser.get(participant.userId) ?? 0;
-      const totalOwed = owedByParticipant.get(participant.id) ?? 0;
-      const totalPaidToOthers =
-        paidToOthersByParticipant.get(participant.id) ?? 0;
-      const totalReceivedFromOthers =
-        receivedByParticipant.get(participant.id) ?? 0;
-
-      return {
-        id: participant.user.id,
-        name: participant.user.name,
-        balance:
-          Math.round(
-            (totalPaid -
-              totalOwed +
-              totalPaidToOthers -
-              totalReceivedFromOthers) *
-            100,
-          ) / 100,
-      };
-    });
+    return participants.map((participant) => ({
+      id: participant.user.id,
+      name: participant.user.name,
+      balance: balances.get(participant.id)!.balance,
+    }));
   }
 }
