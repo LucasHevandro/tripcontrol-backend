@@ -30,6 +30,7 @@ export type TripParticipantMinAggregateOutputType = {
   userId: string | null
   role: $Enums.ParticipantRole | null
   joinedAt: Date | null
+  sponsorId: string | null
 }
 
 export type TripParticipantMaxAggregateOutputType = {
@@ -38,6 +39,7 @@ export type TripParticipantMaxAggregateOutputType = {
   userId: string | null
   role: $Enums.ParticipantRole | null
   joinedAt: Date | null
+  sponsorId: string | null
 }
 
 export type TripParticipantCountAggregateOutputType = {
@@ -46,6 +48,7 @@ export type TripParticipantCountAggregateOutputType = {
   userId: number
   role: number
   joinedAt: number
+  sponsorId: number
   _all: number
 }
 
@@ -56,6 +59,7 @@ export type TripParticipantMinAggregateInputType = {
   userId?: true
   role?: true
   joinedAt?: true
+  sponsorId?: true
 }
 
 export type TripParticipantMaxAggregateInputType = {
@@ -64,6 +68,7 @@ export type TripParticipantMaxAggregateInputType = {
   userId?: true
   role?: true
   joinedAt?: true
+  sponsorId?: true
 }
 
 export type TripParticipantCountAggregateInputType = {
@@ -72,6 +77,7 @@ export type TripParticipantCountAggregateInputType = {
   userId?: true
   role?: true
   joinedAt?: true
+  sponsorId?: true
   _all?: true
 }
 
@@ -153,6 +159,7 @@ export type TripParticipantGroupByOutputType = {
   userId: string
   role: $Enums.ParticipantRole
   joinedAt: Date
+  sponsorId: string | null
   _count: TripParticipantCountAggregateOutputType | null
   _min: TripParticipantMinAggregateOutputType | null
   _max: TripParticipantMaxAggregateOutputType | null
@@ -182,8 +189,11 @@ export type TripParticipantWhereInput = {
   userId?: Prisma.StringFilter<"TripParticipant"> | string
   role?: Prisma.EnumParticipantRoleFilter<"TripParticipant"> | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFilter<"TripParticipant"> | Date | string
+  sponsorId?: Prisma.StringNullableFilter<"TripParticipant"> | string | null
   paymentsMade?: Prisma.PaymentListRelationFilter
   paymentsReceived?: Prisma.PaymentListRelationFilter
+  sponsor?: Prisma.XOR<Prisma.TripParticipantNullableScalarRelationFilter, Prisma.TripParticipantWhereInput> | null
+  dependents?: Prisma.TripParticipantListRelationFilter
   trip?: Prisma.XOR<Prisma.TripScalarRelationFilter, Prisma.TripWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   expenseSplits?: Prisma.ExpenseSplitListRelationFilter
@@ -195,8 +205,11 @@ export type TripParticipantOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   role?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
+  sponsorId?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentsMade?: Prisma.PaymentOrderByRelationAggregateInput
   paymentsReceived?: Prisma.PaymentOrderByRelationAggregateInput
+  sponsor?: Prisma.TripParticipantOrderByWithRelationInput
+  dependents?: Prisma.TripParticipantOrderByRelationAggregateInput
   trip?: Prisma.TripOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
   expenseSplits?: Prisma.ExpenseSplitOrderByRelationAggregateInput
@@ -212,8 +225,11 @@ export type TripParticipantWhereUniqueInput = Prisma.AtLeast<{
   userId?: Prisma.StringFilter<"TripParticipant"> | string
   role?: Prisma.EnumParticipantRoleFilter<"TripParticipant"> | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFilter<"TripParticipant"> | Date | string
+  sponsorId?: Prisma.StringNullableFilter<"TripParticipant"> | string | null
   paymentsMade?: Prisma.PaymentListRelationFilter
   paymentsReceived?: Prisma.PaymentListRelationFilter
+  sponsor?: Prisma.XOR<Prisma.TripParticipantNullableScalarRelationFilter, Prisma.TripParticipantWhereInput> | null
+  dependents?: Prisma.TripParticipantListRelationFilter
   trip?: Prisma.XOR<Prisma.TripScalarRelationFilter, Prisma.TripWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   expenseSplits?: Prisma.ExpenseSplitListRelationFilter
@@ -225,6 +241,7 @@ export type TripParticipantOrderByWithAggregationInput = {
   userId?: Prisma.SortOrder
   role?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
+  sponsorId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.TripParticipantCountOrderByAggregateInput
   _max?: Prisma.TripParticipantMaxOrderByAggregateInput
   _min?: Prisma.TripParticipantMinOrderByAggregateInput
@@ -239,6 +256,7 @@ export type TripParticipantScalarWhereWithAggregatesInput = {
   userId?: Prisma.StringWithAggregatesFilter<"TripParticipant"> | string
   role?: Prisma.EnumParticipantRoleWithAggregatesFilter<"TripParticipant"> | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeWithAggregatesFilter<"TripParticipant"> | Date | string
+  sponsorId?: Prisma.StringNullableWithAggregatesFilter<"TripParticipant"> | string | null
 }
 
 export type TripParticipantCreateInput = {
@@ -247,6 +265,8 @@ export type TripParticipantCreateInput = {
   joinedAt?: Date | string
   paymentsMade?: Prisma.PaymentCreateNestedManyWithoutFromParticipantInput
   paymentsReceived?: Prisma.PaymentCreateNestedManyWithoutToParticipantInput
+  sponsor?: Prisma.TripParticipantCreateNestedOneWithoutDependentsInput
+  dependents?: Prisma.TripParticipantCreateNestedManyWithoutSponsorInput
   trip: Prisma.TripCreateNestedOneWithoutParticipantsInput
   user: Prisma.UserCreateNestedOneWithoutTripsInput
   expenseSplits?: Prisma.ExpenseSplitCreateNestedManyWithoutParticipantInput
@@ -258,8 +278,10 @@ export type TripParticipantUncheckedCreateInput = {
   userId: string
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
+  sponsorId?: string | null
   paymentsMade?: Prisma.PaymentUncheckedCreateNestedManyWithoutFromParticipantInput
   paymentsReceived?: Prisma.PaymentUncheckedCreateNestedManyWithoutToParticipantInput
+  dependents?: Prisma.TripParticipantUncheckedCreateNestedManyWithoutSponsorInput
   expenseSplits?: Prisma.ExpenseSplitUncheckedCreateNestedManyWithoutParticipantInput
 }
 
@@ -269,6 +291,8 @@ export type TripParticipantUpdateInput = {
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paymentsMade?: Prisma.PaymentUpdateManyWithoutFromParticipantNestedInput
   paymentsReceived?: Prisma.PaymentUpdateManyWithoutToParticipantNestedInput
+  sponsor?: Prisma.TripParticipantUpdateOneWithoutDependentsNestedInput
+  dependents?: Prisma.TripParticipantUpdateManyWithoutSponsorNestedInput
   trip?: Prisma.TripUpdateOneRequiredWithoutParticipantsNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutTripsNestedInput
   expenseSplits?: Prisma.ExpenseSplitUpdateManyWithoutParticipantNestedInput
@@ -280,8 +304,10 @@ export type TripParticipantUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sponsorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentsMade?: Prisma.PaymentUncheckedUpdateManyWithoutFromParticipantNestedInput
   paymentsReceived?: Prisma.PaymentUncheckedUpdateManyWithoutToParticipantNestedInput
+  dependents?: Prisma.TripParticipantUncheckedUpdateManyWithoutSponsorNestedInput
   expenseSplits?: Prisma.ExpenseSplitUncheckedUpdateManyWithoutParticipantNestedInput
 }
 
@@ -291,6 +317,7 @@ export type TripParticipantCreateManyInput = {
   userId: string
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
+  sponsorId?: string | null
 }
 
 export type TripParticipantUpdateManyMutationInput = {
@@ -305,6 +332,7 @@ export type TripParticipantUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sponsorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type TripParticipantListRelationFilter = {
@@ -315,6 +343,11 @@ export type TripParticipantListRelationFilter = {
 
 export type TripParticipantOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type TripParticipantNullableScalarRelationFilter = {
+  is?: Prisma.TripParticipantWhereInput | null
+  isNot?: Prisma.TripParticipantWhereInput | null
 }
 
 export type TripParticipantTripIdUserIdCompoundUniqueInput = {
@@ -328,6 +361,7 @@ export type TripParticipantCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   role?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
+  sponsorId?: Prisma.SortOrder
 }
 
 export type TripParticipantMaxOrderByAggregateInput = {
@@ -336,6 +370,7 @@ export type TripParticipantMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   role?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
+  sponsorId?: Prisma.SortOrder
 }
 
 export type TripParticipantMinOrderByAggregateInput = {
@@ -344,6 +379,7 @@ export type TripParticipantMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   role?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
+  sponsorId?: Prisma.SortOrder
 }
 
 export type TripParticipantScalarRelationFilter = {
@@ -435,8 +471,66 @@ export type TripParticipantUncheckedUpdateManyWithoutTripNestedInput = {
   deleteMany?: Prisma.TripParticipantScalarWhereInput | Prisma.TripParticipantScalarWhereInput[]
 }
 
+export type TripParticipantCreateNestedOneWithoutDependentsInput = {
+  create?: Prisma.XOR<Prisma.TripParticipantCreateWithoutDependentsInput, Prisma.TripParticipantUncheckedCreateWithoutDependentsInput>
+  connectOrCreate?: Prisma.TripParticipantCreateOrConnectWithoutDependentsInput
+  connect?: Prisma.TripParticipantWhereUniqueInput
+}
+
+export type TripParticipantCreateNestedManyWithoutSponsorInput = {
+  create?: Prisma.XOR<Prisma.TripParticipantCreateWithoutSponsorInput, Prisma.TripParticipantUncheckedCreateWithoutSponsorInput> | Prisma.TripParticipantCreateWithoutSponsorInput[] | Prisma.TripParticipantUncheckedCreateWithoutSponsorInput[]
+  connectOrCreate?: Prisma.TripParticipantCreateOrConnectWithoutSponsorInput | Prisma.TripParticipantCreateOrConnectWithoutSponsorInput[]
+  createMany?: Prisma.TripParticipantCreateManySponsorInputEnvelope
+  connect?: Prisma.TripParticipantWhereUniqueInput | Prisma.TripParticipantWhereUniqueInput[]
+}
+
+export type TripParticipantUncheckedCreateNestedManyWithoutSponsorInput = {
+  create?: Prisma.XOR<Prisma.TripParticipantCreateWithoutSponsorInput, Prisma.TripParticipantUncheckedCreateWithoutSponsorInput> | Prisma.TripParticipantCreateWithoutSponsorInput[] | Prisma.TripParticipantUncheckedCreateWithoutSponsorInput[]
+  connectOrCreate?: Prisma.TripParticipantCreateOrConnectWithoutSponsorInput | Prisma.TripParticipantCreateOrConnectWithoutSponsorInput[]
+  createMany?: Prisma.TripParticipantCreateManySponsorInputEnvelope
+  connect?: Prisma.TripParticipantWhereUniqueInput | Prisma.TripParticipantWhereUniqueInput[]
+}
+
 export type EnumParticipantRoleFieldUpdateOperationsInput = {
   set?: $Enums.ParticipantRole
+}
+
+export type TripParticipantUpdateOneWithoutDependentsNestedInput = {
+  create?: Prisma.XOR<Prisma.TripParticipantCreateWithoutDependentsInput, Prisma.TripParticipantUncheckedCreateWithoutDependentsInput>
+  connectOrCreate?: Prisma.TripParticipantCreateOrConnectWithoutDependentsInput
+  upsert?: Prisma.TripParticipantUpsertWithoutDependentsInput
+  disconnect?: Prisma.TripParticipantWhereInput | boolean
+  delete?: Prisma.TripParticipantWhereInput | boolean
+  connect?: Prisma.TripParticipantWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TripParticipantUpdateToOneWithWhereWithoutDependentsInput, Prisma.TripParticipantUpdateWithoutDependentsInput>, Prisma.TripParticipantUncheckedUpdateWithoutDependentsInput>
+}
+
+export type TripParticipantUpdateManyWithoutSponsorNestedInput = {
+  create?: Prisma.XOR<Prisma.TripParticipantCreateWithoutSponsorInput, Prisma.TripParticipantUncheckedCreateWithoutSponsorInput> | Prisma.TripParticipantCreateWithoutSponsorInput[] | Prisma.TripParticipantUncheckedCreateWithoutSponsorInput[]
+  connectOrCreate?: Prisma.TripParticipantCreateOrConnectWithoutSponsorInput | Prisma.TripParticipantCreateOrConnectWithoutSponsorInput[]
+  upsert?: Prisma.TripParticipantUpsertWithWhereUniqueWithoutSponsorInput | Prisma.TripParticipantUpsertWithWhereUniqueWithoutSponsorInput[]
+  createMany?: Prisma.TripParticipantCreateManySponsorInputEnvelope
+  set?: Prisma.TripParticipantWhereUniqueInput | Prisma.TripParticipantWhereUniqueInput[]
+  disconnect?: Prisma.TripParticipantWhereUniqueInput | Prisma.TripParticipantWhereUniqueInput[]
+  delete?: Prisma.TripParticipantWhereUniqueInput | Prisma.TripParticipantWhereUniqueInput[]
+  connect?: Prisma.TripParticipantWhereUniqueInput | Prisma.TripParticipantWhereUniqueInput[]
+  update?: Prisma.TripParticipantUpdateWithWhereUniqueWithoutSponsorInput | Prisma.TripParticipantUpdateWithWhereUniqueWithoutSponsorInput[]
+  updateMany?: Prisma.TripParticipantUpdateManyWithWhereWithoutSponsorInput | Prisma.TripParticipantUpdateManyWithWhereWithoutSponsorInput[]
+  deleteMany?: Prisma.TripParticipantScalarWhereInput | Prisma.TripParticipantScalarWhereInput[]
+}
+
+export type TripParticipantUncheckedUpdateManyWithoutSponsorNestedInput = {
+  create?: Prisma.XOR<Prisma.TripParticipantCreateWithoutSponsorInput, Prisma.TripParticipantUncheckedCreateWithoutSponsorInput> | Prisma.TripParticipantCreateWithoutSponsorInput[] | Prisma.TripParticipantUncheckedCreateWithoutSponsorInput[]
+  connectOrCreate?: Prisma.TripParticipantCreateOrConnectWithoutSponsorInput | Prisma.TripParticipantCreateOrConnectWithoutSponsorInput[]
+  upsert?: Prisma.TripParticipantUpsertWithWhereUniqueWithoutSponsorInput | Prisma.TripParticipantUpsertWithWhereUniqueWithoutSponsorInput[]
+  createMany?: Prisma.TripParticipantCreateManySponsorInputEnvelope
+  set?: Prisma.TripParticipantWhereUniqueInput | Prisma.TripParticipantWhereUniqueInput[]
+  disconnect?: Prisma.TripParticipantWhereUniqueInput | Prisma.TripParticipantWhereUniqueInput[]
+  delete?: Prisma.TripParticipantWhereUniqueInput | Prisma.TripParticipantWhereUniqueInput[]
+  connect?: Prisma.TripParticipantWhereUniqueInput | Prisma.TripParticipantWhereUniqueInput[]
+  update?: Prisma.TripParticipantUpdateWithWhereUniqueWithoutSponsorInput | Prisma.TripParticipantUpdateWithWhereUniqueWithoutSponsorInput[]
+  updateMany?: Prisma.TripParticipantUpdateManyWithWhereWithoutSponsorInput | Prisma.TripParticipantUpdateManyWithWhereWithoutSponsorInput[]
+  deleteMany?: Prisma.TripParticipantScalarWhereInput | Prisma.TripParticipantScalarWhereInput[]
 }
 
 export type TripParticipantCreateNestedOneWithoutExpenseSplitsInput = {
@@ -487,6 +581,8 @@ export type TripParticipantCreateWithoutUserInput = {
   joinedAt?: Date | string
   paymentsMade?: Prisma.PaymentCreateNestedManyWithoutFromParticipantInput
   paymentsReceived?: Prisma.PaymentCreateNestedManyWithoutToParticipantInput
+  sponsor?: Prisma.TripParticipantCreateNestedOneWithoutDependentsInput
+  dependents?: Prisma.TripParticipantCreateNestedManyWithoutSponsorInput
   trip: Prisma.TripCreateNestedOneWithoutParticipantsInput
   expenseSplits?: Prisma.ExpenseSplitCreateNestedManyWithoutParticipantInput
 }
@@ -496,8 +592,10 @@ export type TripParticipantUncheckedCreateWithoutUserInput = {
   tripId: string
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
+  sponsorId?: string | null
   paymentsMade?: Prisma.PaymentUncheckedCreateNestedManyWithoutFromParticipantInput
   paymentsReceived?: Prisma.PaymentUncheckedCreateNestedManyWithoutToParticipantInput
+  dependents?: Prisma.TripParticipantUncheckedCreateNestedManyWithoutSponsorInput
   expenseSplits?: Prisma.ExpenseSplitUncheckedCreateNestedManyWithoutParticipantInput
 }
 
@@ -536,6 +634,7 @@ export type TripParticipantScalarWhereInput = {
   userId?: Prisma.StringFilter<"TripParticipant"> | string
   role?: Prisma.EnumParticipantRoleFilter<"TripParticipant"> | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFilter<"TripParticipant"> | Date | string
+  sponsorId?: Prisma.StringNullableFilter<"TripParticipant"> | string | null
 }
 
 export type TripParticipantCreateWithoutTripInput = {
@@ -544,6 +643,8 @@ export type TripParticipantCreateWithoutTripInput = {
   joinedAt?: Date | string
   paymentsMade?: Prisma.PaymentCreateNestedManyWithoutFromParticipantInput
   paymentsReceived?: Prisma.PaymentCreateNestedManyWithoutToParticipantInput
+  sponsor?: Prisma.TripParticipantCreateNestedOneWithoutDependentsInput
+  dependents?: Prisma.TripParticipantCreateNestedManyWithoutSponsorInput
   user: Prisma.UserCreateNestedOneWithoutTripsInput
   expenseSplits?: Prisma.ExpenseSplitCreateNestedManyWithoutParticipantInput
 }
@@ -553,8 +654,10 @@ export type TripParticipantUncheckedCreateWithoutTripInput = {
   userId: string
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
+  sponsorId?: string | null
   paymentsMade?: Prisma.PaymentUncheckedCreateNestedManyWithoutFromParticipantInput
   paymentsReceived?: Prisma.PaymentUncheckedCreateNestedManyWithoutToParticipantInput
+  dependents?: Prisma.TripParticipantUncheckedCreateNestedManyWithoutSponsorInput
   expenseSplits?: Prisma.ExpenseSplitUncheckedCreateNestedManyWithoutParticipantInput
 }
 
@@ -584,12 +687,128 @@ export type TripParticipantUpdateManyWithWhereWithoutTripInput = {
   data: Prisma.XOR<Prisma.TripParticipantUpdateManyMutationInput, Prisma.TripParticipantUncheckedUpdateManyWithoutTripInput>
 }
 
+export type TripParticipantCreateWithoutDependentsInput = {
+  id?: string
+  role?: $Enums.ParticipantRole
+  joinedAt?: Date | string
+  paymentsMade?: Prisma.PaymentCreateNestedManyWithoutFromParticipantInput
+  paymentsReceived?: Prisma.PaymentCreateNestedManyWithoutToParticipantInput
+  sponsor?: Prisma.TripParticipantCreateNestedOneWithoutDependentsInput
+  trip: Prisma.TripCreateNestedOneWithoutParticipantsInput
+  user: Prisma.UserCreateNestedOneWithoutTripsInput
+  expenseSplits?: Prisma.ExpenseSplitCreateNestedManyWithoutParticipantInput
+}
+
+export type TripParticipantUncheckedCreateWithoutDependentsInput = {
+  id?: string
+  tripId: string
+  userId: string
+  role?: $Enums.ParticipantRole
+  joinedAt?: Date | string
+  sponsorId?: string | null
+  paymentsMade?: Prisma.PaymentUncheckedCreateNestedManyWithoutFromParticipantInput
+  paymentsReceived?: Prisma.PaymentUncheckedCreateNestedManyWithoutToParticipantInput
+  expenseSplits?: Prisma.ExpenseSplitUncheckedCreateNestedManyWithoutParticipantInput
+}
+
+export type TripParticipantCreateOrConnectWithoutDependentsInput = {
+  where: Prisma.TripParticipantWhereUniqueInput
+  create: Prisma.XOR<Prisma.TripParticipantCreateWithoutDependentsInput, Prisma.TripParticipantUncheckedCreateWithoutDependentsInput>
+}
+
+export type TripParticipantCreateWithoutSponsorInput = {
+  id?: string
+  role?: $Enums.ParticipantRole
+  joinedAt?: Date | string
+  paymentsMade?: Prisma.PaymentCreateNestedManyWithoutFromParticipantInput
+  paymentsReceived?: Prisma.PaymentCreateNestedManyWithoutToParticipantInput
+  dependents?: Prisma.TripParticipantCreateNestedManyWithoutSponsorInput
+  trip: Prisma.TripCreateNestedOneWithoutParticipantsInput
+  user: Prisma.UserCreateNestedOneWithoutTripsInput
+  expenseSplits?: Prisma.ExpenseSplitCreateNestedManyWithoutParticipantInput
+}
+
+export type TripParticipantUncheckedCreateWithoutSponsorInput = {
+  id?: string
+  tripId: string
+  userId: string
+  role?: $Enums.ParticipantRole
+  joinedAt?: Date | string
+  paymentsMade?: Prisma.PaymentUncheckedCreateNestedManyWithoutFromParticipantInput
+  paymentsReceived?: Prisma.PaymentUncheckedCreateNestedManyWithoutToParticipantInput
+  dependents?: Prisma.TripParticipantUncheckedCreateNestedManyWithoutSponsorInput
+  expenseSplits?: Prisma.ExpenseSplitUncheckedCreateNestedManyWithoutParticipantInput
+}
+
+export type TripParticipantCreateOrConnectWithoutSponsorInput = {
+  where: Prisma.TripParticipantWhereUniqueInput
+  create: Prisma.XOR<Prisma.TripParticipantCreateWithoutSponsorInput, Prisma.TripParticipantUncheckedCreateWithoutSponsorInput>
+}
+
+export type TripParticipantCreateManySponsorInputEnvelope = {
+  data: Prisma.TripParticipantCreateManySponsorInput | Prisma.TripParticipantCreateManySponsorInput[]
+  skipDuplicates?: boolean
+}
+
+export type TripParticipantUpsertWithoutDependentsInput = {
+  update: Prisma.XOR<Prisma.TripParticipantUpdateWithoutDependentsInput, Prisma.TripParticipantUncheckedUpdateWithoutDependentsInput>
+  create: Prisma.XOR<Prisma.TripParticipantCreateWithoutDependentsInput, Prisma.TripParticipantUncheckedCreateWithoutDependentsInput>
+  where?: Prisma.TripParticipantWhereInput
+}
+
+export type TripParticipantUpdateToOneWithWhereWithoutDependentsInput = {
+  where?: Prisma.TripParticipantWhereInput
+  data: Prisma.XOR<Prisma.TripParticipantUpdateWithoutDependentsInput, Prisma.TripParticipantUncheckedUpdateWithoutDependentsInput>
+}
+
+export type TripParticipantUpdateWithoutDependentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  paymentsMade?: Prisma.PaymentUpdateManyWithoutFromParticipantNestedInput
+  paymentsReceived?: Prisma.PaymentUpdateManyWithoutToParticipantNestedInput
+  sponsor?: Prisma.TripParticipantUpdateOneWithoutDependentsNestedInput
+  trip?: Prisma.TripUpdateOneRequiredWithoutParticipantsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutTripsNestedInput
+  expenseSplits?: Prisma.ExpenseSplitUpdateManyWithoutParticipantNestedInput
+}
+
+export type TripParticipantUncheckedUpdateWithoutDependentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tripId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sponsorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentsMade?: Prisma.PaymentUncheckedUpdateManyWithoutFromParticipantNestedInput
+  paymentsReceived?: Prisma.PaymentUncheckedUpdateManyWithoutToParticipantNestedInput
+  expenseSplits?: Prisma.ExpenseSplitUncheckedUpdateManyWithoutParticipantNestedInput
+}
+
+export type TripParticipantUpsertWithWhereUniqueWithoutSponsorInput = {
+  where: Prisma.TripParticipantWhereUniqueInput
+  update: Prisma.XOR<Prisma.TripParticipantUpdateWithoutSponsorInput, Prisma.TripParticipantUncheckedUpdateWithoutSponsorInput>
+  create: Prisma.XOR<Prisma.TripParticipantCreateWithoutSponsorInput, Prisma.TripParticipantUncheckedCreateWithoutSponsorInput>
+}
+
+export type TripParticipantUpdateWithWhereUniqueWithoutSponsorInput = {
+  where: Prisma.TripParticipantWhereUniqueInput
+  data: Prisma.XOR<Prisma.TripParticipantUpdateWithoutSponsorInput, Prisma.TripParticipantUncheckedUpdateWithoutSponsorInput>
+}
+
+export type TripParticipantUpdateManyWithWhereWithoutSponsorInput = {
+  where: Prisma.TripParticipantScalarWhereInput
+  data: Prisma.XOR<Prisma.TripParticipantUpdateManyMutationInput, Prisma.TripParticipantUncheckedUpdateManyWithoutSponsorInput>
+}
+
 export type TripParticipantCreateWithoutExpenseSplitsInput = {
   id?: string
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   paymentsMade?: Prisma.PaymentCreateNestedManyWithoutFromParticipantInput
   paymentsReceived?: Prisma.PaymentCreateNestedManyWithoutToParticipantInput
+  sponsor?: Prisma.TripParticipantCreateNestedOneWithoutDependentsInput
+  dependents?: Prisma.TripParticipantCreateNestedManyWithoutSponsorInput
   trip: Prisma.TripCreateNestedOneWithoutParticipantsInput
   user: Prisma.UserCreateNestedOneWithoutTripsInput
 }
@@ -600,8 +819,10 @@ export type TripParticipantUncheckedCreateWithoutExpenseSplitsInput = {
   userId: string
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
+  sponsorId?: string | null
   paymentsMade?: Prisma.PaymentUncheckedCreateNestedManyWithoutFromParticipantInput
   paymentsReceived?: Prisma.PaymentUncheckedCreateNestedManyWithoutToParticipantInput
+  dependents?: Prisma.TripParticipantUncheckedCreateNestedManyWithoutSponsorInput
 }
 
 export type TripParticipantCreateOrConnectWithoutExpenseSplitsInput = {
@@ -626,6 +847,8 @@ export type TripParticipantUpdateWithoutExpenseSplitsInput = {
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paymentsMade?: Prisma.PaymentUpdateManyWithoutFromParticipantNestedInput
   paymentsReceived?: Prisma.PaymentUpdateManyWithoutToParticipantNestedInput
+  sponsor?: Prisma.TripParticipantUpdateOneWithoutDependentsNestedInput
+  dependents?: Prisma.TripParticipantUpdateManyWithoutSponsorNestedInput
   trip?: Prisma.TripUpdateOneRequiredWithoutParticipantsNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutTripsNestedInput
 }
@@ -636,8 +859,10 @@ export type TripParticipantUncheckedUpdateWithoutExpenseSplitsInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sponsorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentsMade?: Prisma.PaymentUncheckedUpdateManyWithoutFromParticipantNestedInput
   paymentsReceived?: Prisma.PaymentUncheckedUpdateManyWithoutToParticipantNestedInput
+  dependents?: Prisma.TripParticipantUncheckedUpdateManyWithoutSponsorNestedInput
 }
 
 export type TripParticipantCreateWithoutPaymentsMadeInput = {
@@ -645,6 +870,8 @@ export type TripParticipantCreateWithoutPaymentsMadeInput = {
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   paymentsReceived?: Prisma.PaymentCreateNestedManyWithoutToParticipantInput
+  sponsor?: Prisma.TripParticipantCreateNestedOneWithoutDependentsInput
+  dependents?: Prisma.TripParticipantCreateNestedManyWithoutSponsorInput
   trip: Prisma.TripCreateNestedOneWithoutParticipantsInput
   user: Prisma.UserCreateNestedOneWithoutTripsInput
   expenseSplits?: Prisma.ExpenseSplitCreateNestedManyWithoutParticipantInput
@@ -656,7 +883,9 @@ export type TripParticipantUncheckedCreateWithoutPaymentsMadeInput = {
   userId: string
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
+  sponsorId?: string | null
   paymentsReceived?: Prisma.PaymentUncheckedCreateNestedManyWithoutToParticipantInput
+  dependents?: Prisma.TripParticipantUncheckedCreateNestedManyWithoutSponsorInput
   expenseSplits?: Prisma.ExpenseSplitUncheckedCreateNestedManyWithoutParticipantInput
 }
 
@@ -670,6 +899,8 @@ export type TripParticipantCreateWithoutPaymentsReceivedInput = {
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
   paymentsMade?: Prisma.PaymentCreateNestedManyWithoutFromParticipantInput
+  sponsor?: Prisma.TripParticipantCreateNestedOneWithoutDependentsInput
+  dependents?: Prisma.TripParticipantCreateNestedManyWithoutSponsorInput
   trip: Prisma.TripCreateNestedOneWithoutParticipantsInput
   user: Prisma.UserCreateNestedOneWithoutTripsInput
   expenseSplits?: Prisma.ExpenseSplitCreateNestedManyWithoutParticipantInput
@@ -681,7 +912,9 @@ export type TripParticipantUncheckedCreateWithoutPaymentsReceivedInput = {
   userId: string
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
+  sponsorId?: string | null
   paymentsMade?: Prisma.PaymentUncheckedCreateNestedManyWithoutFromParticipantInput
+  dependents?: Prisma.TripParticipantUncheckedCreateNestedManyWithoutSponsorInput
   expenseSplits?: Prisma.ExpenseSplitUncheckedCreateNestedManyWithoutParticipantInput
 }
 
@@ -706,6 +939,8 @@ export type TripParticipantUpdateWithoutPaymentsMadeInput = {
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paymentsReceived?: Prisma.PaymentUpdateManyWithoutToParticipantNestedInput
+  sponsor?: Prisma.TripParticipantUpdateOneWithoutDependentsNestedInput
+  dependents?: Prisma.TripParticipantUpdateManyWithoutSponsorNestedInput
   trip?: Prisma.TripUpdateOneRequiredWithoutParticipantsNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutTripsNestedInput
   expenseSplits?: Prisma.ExpenseSplitUpdateManyWithoutParticipantNestedInput
@@ -717,7 +952,9 @@ export type TripParticipantUncheckedUpdateWithoutPaymentsMadeInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sponsorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentsReceived?: Prisma.PaymentUncheckedUpdateManyWithoutToParticipantNestedInput
+  dependents?: Prisma.TripParticipantUncheckedUpdateManyWithoutSponsorNestedInput
   expenseSplits?: Prisma.ExpenseSplitUncheckedUpdateManyWithoutParticipantNestedInput
 }
 
@@ -737,6 +974,8 @@ export type TripParticipantUpdateWithoutPaymentsReceivedInput = {
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paymentsMade?: Prisma.PaymentUpdateManyWithoutFromParticipantNestedInput
+  sponsor?: Prisma.TripParticipantUpdateOneWithoutDependentsNestedInput
+  dependents?: Prisma.TripParticipantUpdateManyWithoutSponsorNestedInput
   trip?: Prisma.TripUpdateOneRequiredWithoutParticipantsNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutTripsNestedInput
   expenseSplits?: Prisma.ExpenseSplitUpdateManyWithoutParticipantNestedInput
@@ -748,7 +987,9 @@ export type TripParticipantUncheckedUpdateWithoutPaymentsReceivedInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sponsorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentsMade?: Prisma.PaymentUncheckedUpdateManyWithoutFromParticipantNestedInput
+  dependents?: Prisma.TripParticipantUncheckedUpdateManyWithoutSponsorNestedInput
   expenseSplits?: Prisma.ExpenseSplitUncheckedUpdateManyWithoutParticipantNestedInput
 }
 
@@ -757,6 +998,7 @@ export type TripParticipantCreateManyUserInput = {
   tripId: string
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
+  sponsorId?: string | null
 }
 
 export type TripParticipantUpdateWithoutUserInput = {
@@ -765,6 +1007,8 @@ export type TripParticipantUpdateWithoutUserInput = {
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paymentsMade?: Prisma.PaymentUpdateManyWithoutFromParticipantNestedInput
   paymentsReceived?: Prisma.PaymentUpdateManyWithoutToParticipantNestedInput
+  sponsor?: Prisma.TripParticipantUpdateOneWithoutDependentsNestedInput
+  dependents?: Prisma.TripParticipantUpdateManyWithoutSponsorNestedInput
   trip?: Prisma.TripUpdateOneRequiredWithoutParticipantsNestedInput
   expenseSplits?: Prisma.ExpenseSplitUpdateManyWithoutParticipantNestedInput
 }
@@ -774,8 +1018,10 @@ export type TripParticipantUncheckedUpdateWithoutUserInput = {
   tripId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sponsorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentsMade?: Prisma.PaymentUncheckedUpdateManyWithoutFromParticipantNestedInput
   paymentsReceived?: Prisma.PaymentUncheckedUpdateManyWithoutToParticipantNestedInput
+  dependents?: Prisma.TripParticipantUncheckedUpdateManyWithoutSponsorNestedInput
   expenseSplits?: Prisma.ExpenseSplitUncheckedUpdateManyWithoutParticipantNestedInput
 }
 
@@ -784,6 +1030,7 @@ export type TripParticipantUncheckedUpdateManyWithoutUserInput = {
   tripId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sponsorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type TripParticipantCreateManyTripInput = {
@@ -791,6 +1038,7 @@ export type TripParticipantCreateManyTripInput = {
   userId: string
   role?: $Enums.ParticipantRole
   joinedAt?: Date | string
+  sponsorId?: string | null
 }
 
 export type TripParticipantUpdateWithoutTripInput = {
@@ -799,6 +1047,8 @@ export type TripParticipantUpdateWithoutTripInput = {
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   paymentsMade?: Prisma.PaymentUpdateManyWithoutFromParticipantNestedInput
   paymentsReceived?: Prisma.PaymentUpdateManyWithoutToParticipantNestedInput
+  sponsor?: Prisma.TripParticipantUpdateOneWithoutDependentsNestedInput
+  dependents?: Prisma.TripParticipantUpdateManyWithoutSponsorNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutTripsNestedInput
   expenseSplits?: Prisma.ExpenseSplitUpdateManyWithoutParticipantNestedInput
 }
@@ -808,13 +1058,56 @@ export type TripParticipantUncheckedUpdateWithoutTripInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sponsorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentsMade?: Prisma.PaymentUncheckedUpdateManyWithoutFromParticipantNestedInput
   paymentsReceived?: Prisma.PaymentUncheckedUpdateManyWithoutToParticipantNestedInput
+  dependents?: Prisma.TripParticipantUncheckedUpdateManyWithoutSponsorNestedInput
   expenseSplits?: Prisma.ExpenseSplitUncheckedUpdateManyWithoutParticipantNestedInput
 }
 
 export type TripParticipantUncheckedUpdateManyWithoutTripInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sponsorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type TripParticipantCreateManySponsorInput = {
+  id?: string
+  tripId: string
+  userId: string
+  role?: $Enums.ParticipantRole
+  joinedAt?: Date | string
+}
+
+export type TripParticipantUpdateWithoutSponsorInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  paymentsMade?: Prisma.PaymentUpdateManyWithoutFromParticipantNestedInput
+  paymentsReceived?: Prisma.PaymentUpdateManyWithoutToParticipantNestedInput
+  dependents?: Prisma.TripParticipantUpdateManyWithoutSponsorNestedInput
+  trip?: Prisma.TripUpdateOneRequiredWithoutParticipantsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutTripsNestedInput
+  expenseSplits?: Prisma.ExpenseSplitUpdateManyWithoutParticipantNestedInput
+}
+
+export type TripParticipantUncheckedUpdateWithoutSponsorInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tripId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  paymentsMade?: Prisma.PaymentUncheckedUpdateManyWithoutFromParticipantNestedInput
+  paymentsReceived?: Prisma.PaymentUncheckedUpdateManyWithoutToParticipantNestedInput
+  dependents?: Prisma.TripParticipantUncheckedUpdateManyWithoutSponsorNestedInput
+  expenseSplits?: Prisma.ExpenseSplitUncheckedUpdateManyWithoutParticipantNestedInput
+}
+
+export type TripParticipantUncheckedUpdateManyWithoutSponsorInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tripId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumParticipantRoleFieldUpdateOperationsInput | $Enums.ParticipantRole
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -828,12 +1121,14 @@ export type TripParticipantUncheckedUpdateManyWithoutTripInput = {
 export type TripParticipantCountOutputType = {
   paymentsMade: number
   paymentsReceived: number
+  dependents: number
   expenseSplits: number
 }
 
 export type TripParticipantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   paymentsMade?: boolean | TripParticipantCountOutputTypeCountPaymentsMadeArgs
   paymentsReceived?: boolean | TripParticipantCountOutputTypeCountPaymentsReceivedArgs
+  dependents?: boolean | TripParticipantCountOutputTypeCountDependentsArgs
   expenseSplits?: boolean | TripParticipantCountOutputTypeCountExpenseSplitsArgs
 }
 
@@ -864,6 +1159,13 @@ export type TripParticipantCountOutputTypeCountPaymentsReceivedArgs<ExtArgs exte
 /**
  * TripParticipantCountOutputType without action
  */
+export type TripParticipantCountOutputTypeCountDependentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TripParticipantWhereInput
+}
+
+/**
+ * TripParticipantCountOutputType without action
+ */
 export type TripParticipantCountOutputTypeCountExpenseSplitsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ExpenseSplitWhereInput
 }
@@ -875,8 +1177,11 @@ export type TripParticipantSelect<ExtArgs extends runtime.Types.Extensions.Inter
   userId?: boolean
   role?: boolean
   joinedAt?: boolean
+  sponsorId?: boolean
   paymentsMade?: boolean | Prisma.TripParticipant$paymentsMadeArgs<ExtArgs>
   paymentsReceived?: boolean | Prisma.TripParticipant$paymentsReceivedArgs<ExtArgs>
+  sponsor?: boolean | Prisma.TripParticipant$sponsorArgs<ExtArgs>
+  dependents?: boolean | Prisma.TripParticipant$dependentsArgs<ExtArgs>
   trip?: boolean | Prisma.TripDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   expenseSplits?: boolean | Prisma.TripParticipant$expenseSplitsArgs<ExtArgs>
@@ -889,6 +1194,8 @@ export type TripParticipantSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   userId?: boolean
   role?: boolean
   joinedAt?: boolean
+  sponsorId?: boolean
+  sponsor?: boolean | Prisma.TripParticipant$sponsorArgs<ExtArgs>
   trip?: boolean | Prisma.TripDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["tripParticipant"]>
@@ -899,6 +1206,8 @@ export type TripParticipantSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   userId?: boolean
   role?: boolean
   joinedAt?: boolean
+  sponsorId?: boolean
+  sponsor?: boolean | Prisma.TripParticipant$sponsorArgs<ExtArgs>
   trip?: boolean | Prisma.TripDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["tripParticipant"]>
@@ -909,22 +1218,27 @@ export type TripParticipantSelectScalar = {
   userId?: boolean
   role?: boolean
   joinedAt?: boolean
+  sponsorId?: boolean
 }
 
-export type TripParticipantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tripId" | "userId" | "role" | "joinedAt", ExtArgs["result"]["tripParticipant"]>
+export type TripParticipantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tripId" | "userId" | "role" | "joinedAt" | "sponsorId", ExtArgs["result"]["tripParticipant"]>
 export type TripParticipantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   paymentsMade?: boolean | Prisma.TripParticipant$paymentsMadeArgs<ExtArgs>
   paymentsReceived?: boolean | Prisma.TripParticipant$paymentsReceivedArgs<ExtArgs>
+  sponsor?: boolean | Prisma.TripParticipant$sponsorArgs<ExtArgs>
+  dependents?: boolean | Prisma.TripParticipant$dependentsArgs<ExtArgs>
   trip?: boolean | Prisma.TripDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   expenseSplits?: boolean | Prisma.TripParticipant$expenseSplitsArgs<ExtArgs>
   _count?: boolean | Prisma.TripParticipantCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TripParticipantIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  sponsor?: boolean | Prisma.TripParticipant$sponsorArgs<ExtArgs>
   trip?: boolean | Prisma.TripDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type TripParticipantIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  sponsor?: boolean | Prisma.TripParticipant$sponsorArgs<ExtArgs>
   trip?: boolean | Prisma.TripDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -934,6 +1248,8 @@ export type $TripParticipantPayload<ExtArgs extends runtime.Types.Extensions.Int
   objects: {
     paymentsMade: Prisma.$PaymentPayload<ExtArgs>[]
     paymentsReceived: Prisma.$PaymentPayload<ExtArgs>[]
+    sponsor: Prisma.$TripParticipantPayload<ExtArgs> | null
+    dependents: Prisma.$TripParticipantPayload<ExtArgs>[]
     trip: Prisma.$TripPayload<ExtArgs>
     user: Prisma.$UserPayload<ExtArgs>
     expenseSplits: Prisma.$ExpenseSplitPayload<ExtArgs>[]
@@ -944,6 +1260,7 @@ export type $TripParticipantPayload<ExtArgs extends runtime.Types.Extensions.Int
     userId: string
     role: $Enums.ParticipantRole
     joinedAt: Date
+    sponsorId: string | null
   }, ExtArgs["result"]["tripParticipant"]>
   composites: {}
 }
@@ -1340,6 +1657,8 @@ export interface Prisma__TripParticipantClient<T, Null = never, ExtArgs extends 
   readonly [Symbol.toStringTag]: "PrismaPromise"
   paymentsMade<T extends Prisma.TripParticipant$paymentsMadeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TripParticipant$paymentsMadeArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   paymentsReceived<T extends Prisma.TripParticipant$paymentsReceivedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TripParticipant$paymentsReceivedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sponsor<T extends Prisma.TripParticipant$sponsorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TripParticipant$sponsorArgs<ExtArgs>>): Prisma.Prisma__TripParticipantClient<runtime.Types.Result.GetResult<Prisma.$TripParticipantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  dependents<T extends Prisma.TripParticipant$dependentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TripParticipant$dependentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TripParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   trip<T extends Prisma.TripDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TripDefaultArgs<ExtArgs>>): Prisma.Prisma__TripClient<runtime.Types.Result.GetResult<Prisma.$TripPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   expenseSplits<T extends Prisma.TripParticipant$expenseSplitsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TripParticipant$expenseSplitsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExpenseSplitPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1377,6 +1696,7 @@ export interface TripParticipantFieldRefs {
   readonly userId: Prisma.FieldRef<"TripParticipant", 'String'>
   readonly role: Prisma.FieldRef<"TripParticipant", 'ParticipantRole'>
   readonly joinedAt: Prisma.FieldRef<"TripParticipant", 'DateTime'>
+  readonly sponsorId: Prisma.FieldRef<"TripParticipant", 'String'>
 }
     
 
@@ -1823,6 +2143,49 @@ export type TripParticipant$paymentsReceivedArgs<ExtArgs extends runtime.Types.E
   take?: number
   skip?: number
   distinct?: Prisma.PaymentScalarFieldEnum | Prisma.PaymentScalarFieldEnum[]
+}
+
+/**
+ * TripParticipant.sponsor
+ */
+export type TripParticipant$sponsorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TripParticipant
+   */
+  select?: Prisma.TripParticipantSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TripParticipant
+   */
+  omit?: Prisma.TripParticipantOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TripParticipantInclude<ExtArgs> | null
+  where?: Prisma.TripParticipantWhereInput
+}
+
+/**
+ * TripParticipant.dependents
+ */
+export type TripParticipant$dependentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TripParticipant
+   */
+  select?: Prisma.TripParticipantSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TripParticipant
+   */
+  omit?: Prisma.TripParticipantOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TripParticipantInclude<ExtArgs> | null
+  where?: Prisma.TripParticipantWhereInput
+  orderBy?: Prisma.TripParticipantOrderByWithRelationInput | Prisma.TripParticipantOrderByWithRelationInput[]
+  cursor?: Prisma.TripParticipantWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TripParticipantScalarFieldEnum | Prisma.TripParticipantScalarFieldEnum[]
 }
 
 /**

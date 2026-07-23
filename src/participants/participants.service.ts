@@ -15,6 +15,7 @@ import { BalanceCalculatorService } from '../finances/balance.service';
 type ParticipantForBalance = {
   id: string;
   userId: string;
+  sponsorId: string | null;
   role?: string;
   joinedAt?: Date;
   user: {
@@ -278,6 +279,90 @@ export class ParticipantsService {
     return { message: 'Participante removido com sucesso' };
   }
 
+  // ─── Vincular/desvincular dependente ──────────────────────────────────────
+
+  async setSponsor(
+    userId: string,
+    tripId: string,
+    participantId: string,
+    sponsorId: string | null,
+  ) {
+    await this.tripsService.assertParticipant(userId, tripId);
+
+    const actor = await this.prisma.tripParticipant.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+    });
+    if (!actor) throw new ForbiddenException('Acesso negado');
+
+    const target = await this.prisma.tripParticipant.findUnique({
+      where: { tripId_userId: { tripId, userId: participantId } },
+    });
+    if (!target) throw new NotFoundException('Participante não encontrado');
+
+    if (sponsorId === null) {
+      if (target.sponsorId === null) {
+        return { message: 'Participante já é independente' };
+      }
+
+      const canUnlink =
+        actor.role === 'ORGANIZER' || actor.id === target.sponsorId;
+      if (!canUnlink) {
+        throw new ForbiddenException(
+          'Apenas o patrocinador ou o organizador podem remover este vínculo',
+        );
+      }
+
+      await this.prisma.tripParticipant.update({
+        where: { id: target.id },
+        data: { sponsorId: null },
+      });
+      return { message: 'Vínculo de dependente removido' };
+    }
+
+    if (sponsorId === participantId) {
+      throw new BadRequestException(
+        'Um participante não pode ser seu próprio patrocinador',
+      );
+    }
+
+    const sponsor = await this.prisma.tripParticipant.findUnique({
+      where: { tripId_userId: { tripId, userId: sponsorId } },
+    });
+    if (!sponsor) {
+      throw new BadRequestException(
+        'Patrocinador precisa ser um participante desta viagem',
+      );
+    }
+
+    if (sponsor.sponsorId !== null) {
+      throw new BadRequestException(
+        'Um dependente não pode patrocinar outro participante',
+      );
+    }
+
+    const dependentsOfTarget = await this.prisma.tripParticipant.count({
+      where: { sponsorId: target.id },
+    });
+    if (dependentsOfTarget > 0) {
+      throw new BadRequestException(
+        'Este participante já é patrocinador de outros e não pode se tornar dependente',
+      );
+    }
+
+    const canLink = actor.role === 'ORGANIZER' || actor.id === sponsor.id;
+    if (!canLink) {
+      throw new ForbiddenException(
+        'Apenas o próprio patrocinador ou o organizador podem criar este vínculo',
+      );
+    }
+
+    await this.prisma.tripParticipant.update({
+      where: { id: target.id },
+      data: { sponsorId: sponsor.id },
+    });
+    return { message: 'Dependente vinculado com sucesso' };
+  }
+
   // ─── Acertos ──────────────────────────────────────────────────────────────
   async getSettlements(userId: string, tripId: string) {
     await this.tripsService.assertParticipant(userId, tripId);
@@ -378,9 +463,15 @@ export class ParticipantsService {
       tripId,
       participants.map((p) => ({ id: p.id, userId: p.userId })),
     );
+    const byTripParticipantId = new Map(
+      participants.map((p) => [p.id, p]),
+    );
 
     return participants.map((participant) => {
       const b = balances.get(participant.id)!;
+      const sponsor = participant.sponsorId
+        ? byTripParticipantId.get(participant.sponsorId)
+        : undefined;
       return {
         id: participant.user.id,
         name: participant.user.name,
@@ -391,6 +482,8 @@ export class ParticipantsService {
         individualQuota: b.individualQuota,
         balance: b.balance,
         joinedAt: participant.joinedAt,
+        sponsorId: sponsor ? sponsor.user.id : null,
+        sponsorName: sponsor ? sponsor.user.name : null,
       };
     });
   }

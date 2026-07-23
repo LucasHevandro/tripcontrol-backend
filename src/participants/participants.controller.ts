@@ -2,6 +2,7 @@ import {
     Controller,
     Get,
     Post,
+    Patch,
     Delete,
     Body,
     Param,
@@ -16,6 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { ParticipantsService } from './participants.service';
 import { InviteByEmailDto } from './dto/invite-by-email.dto';
+import { SetSponsorDto } from './dto/set-sponsor.dto';
 import { JwtGuard } from '../auth/guards/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -71,6 +73,17 @@ export class ParticipantsController {
         @Param('tripId') tripId: string,
     ) {
         return this.participantsService.notifyDebtors(user.id, tripId);
+    }
+
+    @Patch(':participantId/sponsor')
+    @ApiOperation({ summary: 'Vincular/desvincular um participante como dependente' })
+    setSponsor(
+        @CurrentUser() user: { id: string },
+        @Param('tripId') tripId: string,
+        @Param('participantId') participantId: string,
+        @Body() dto: SetSponsorDto,
+    ) {
+        return this.participantsService.setSponsor(user.id, tripId, participantId, dto.sponsorId);
     }
 
     @Delete(':participantId')

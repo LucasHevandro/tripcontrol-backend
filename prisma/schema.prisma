@@ -114,6 +114,10 @@ model TripParticipant {
   paymentsMade      Payment[] @relation("PaymentsMade")
   paymentsReceived  Payment[] @relation("PaymentsReceived")
 
+  sponsorId String?
+  sponsor    TripParticipant?  @relation("Sponsorship", fields: [sponsorId], references: [id], onDelete: SetNull)
+  dependents TripParticipant[] @relation("Sponsorship")
+
   trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

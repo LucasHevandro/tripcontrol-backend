@@ -2,13 +2,18 @@ jest.mock('../prisma/prisma.service', () => ({
   PrismaService: class PrismaService {},
 }));
 
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ParticipantsService } from './participants.service';
+import { BalanceCalculatorService } from '../finances/balance.service';
 
 describe('ParticipantsService', () => {
   const createService = () => {
     const prisma = {
       tripParticipant: {
         findMany: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+        count: jest.fn(),
       },
       expense: {
         findMany: jest.fn(),
@@ -23,14 +28,20 @@ describe('ParticipantsService', () => {
     const tripsService = {
       assertParticipant: jest.fn().mockResolvedValue({ id: 'participant-a' }),
     };
+    // Serviço real de cálculo de saldos, rodando sobre o mesmo prisma mockado —
+    // exercita a lógica real de agregação, não apenas um stub.
+    const balanceCalc = new BalanceCalculatorService(prisma as any);
 
     return {
       prisma,
+      tripsService,
+      balanceCalc,
       service: new ParticipantsService(
         prisma as any,
         tripsService as any,
         {} as any,
         {} as any,
+        balanceCalc as any,
       ),
     };
   };
@@ -82,5 +93,144 @@ describe('ParticipantsService', () => {
     expect(prisma.expense.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.expenseSplit.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.payment.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  describe('setSponsor', () => {
+    const TRIP = 'trip-1';
+    const OTHER_TRIP = 'trip-2';
+
+    // Ana: organizadora, Bruno: membro comum, Bruno-esposa: dependente de Bruno,
+    // Carlos: já patrocina alguém em outra viagem (para o teste de trip cruzado).
+    const baseRows = [
+      { id: 'p-ana', tripId: TRIP, userId: 'user-ana', role: 'ORGANIZER', sponsorId: null },
+      { id: 'p-bruno', tripId: TRIP, userId: 'user-bruno', role: 'MEMBER', sponsorId: null },
+      { id: 'p-bruno-esposa', tripId: TRIP, userId: 'user-bruno-esposa', role: 'MEMBER', sponsorId: 'p-bruno' },
+      { id: 'p-carlos', tripId: TRIP, userId: 'user-carlos', role: 'MEMBER', sponsorId: null },
+      { id: 'p-outro', tripId: OTHER_TRIP, userId: 'user-outro', role: 'MEMBER', sponsorId: null },
+    ];
+
+    const mockRows = (prisma: any, rows = baseRows) => {
+      prisma.tripParticipant.findUnique.mockImplementation(
+        ({ where: { tripId_userId } }: any) =>
+          Promise.resolve(
+            rows.find(
+              (r) =>
+                r.tripId === tripId_userId.tripId &&
+                r.userId === tripId_userId.userId,
+            ) ?? null,
+          ),
+      );
+      prisma.tripParticipant.count.mockImplementation(({ where }: any) =>
+        Promise.resolve(rows.filter((r) => r.sponsorId === where.sponsorId).length),
+      );
+      prisma.tripParticipant.update.mockResolvedValue(undefined);
+    };
+
+    it('vincula um dependente ao patrocinador que está agindo', async () => {
+      const { prisma, service } = createService();
+      mockRows(prisma);
+
+      await service.setSponsor('user-bruno', TRIP, 'user-carlos', 'user-bruno');
+
+      expect(prisma.tripParticipant.update).toHaveBeenCalledWith({
+        where: { id: 'p-carlos' },
+        data: { sponsorId: 'p-bruno' },
+      });
+    });
+
+    it('organizador pode vincular dois outros participantes', async () => {
+      const { prisma, service } = createService();
+      mockRows(prisma);
+
+      await service.setSponsor('user-ana', TRIP, 'user-carlos', 'user-bruno');
+
+      expect(prisma.tripParticipant.update).toHaveBeenCalledWith({
+        where: { id: 'p-carlos' },
+        data: { sponsorId: 'p-bruno' },
+      });
+    });
+
+    it('rejeita auto-patrocínio', async () => {
+      const { prisma, service } = createService();
+      mockRows(prisma);
+
+      await expect(
+        service.setSponsor('user-bruno', TRIP, 'user-bruno', 'user-bruno'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejeita corrente: quem já é dependente não pode virar patrocinador', async () => {
+      const { prisma, service } = createService();
+      mockRows(prisma);
+
+      await expect(
+        service.setSponsor(
+          'user-bruno-esposa',
+          TRIP,
+          'user-carlos',
+          'user-bruno-esposa',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejeita corrente reversa: quem já patrocina não pode virar dependente', async () => {
+      const { prisma, service } = createService();
+      mockRows(prisma);
+
+      await expect(
+        service.setSponsor('user-carlos', TRIP, 'user-bruno', 'user-carlos'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejeita patrocinador que não pertence à mesma viagem', async () => {
+      const { prisma, service } = createService();
+      mockRows(prisma);
+
+      await expect(
+        service.setSponsor('user-bruno', TRIP, 'user-carlos', 'user-outro'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejeita ator não autorizado (nem organizador, nem o patrocinador)', async () => {
+      const { prisma, service } = createService();
+      mockRows(prisma);
+
+      await expect(
+        service.setSponsor('user-carlos', TRIP, 'user-carlos', 'user-bruno'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('desvincula pelo próprio patrocinador', async () => {
+      const { prisma, service } = createService();
+      mockRows(prisma);
+
+      await service.setSponsor('user-bruno', TRIP, 'user-bruno-esposa', null);
+
+      expect(prisma.tripParticipant.update).toHaveBeenCalledWith({
+        where: { id: 'p-bruno-esposa' },
+        data: { sponsorId: null },
+      });
+    });
+
+    it('desvincula pelo organizador', async () => {
+      const { prisma, service } = createService();
+      mockRows(prisma);
+
+      await service.setSponsor('user-ana', TRIP, 'user-bruno-esposa', null);
+
+      expect(prisma.tripParticipant.update).toHaveBeenCalledWith({
+        where: { id: 'p-bruno-esposa' },
+        data: { sponsorId: null },
+      });
+    });
+
+    it('rejeita desvincular por quem não é organizador nem patrocinador', async () => {
+      const { prisma, service } = createService();
+      mockRows(prisma);
+
+      await expect(
+        service.setSponsor('user-carlos', TRIP, 'user-bruno-esposa', null),
+      ).rejects.toThrow(ForbiddenException);
+    });
   });
 });

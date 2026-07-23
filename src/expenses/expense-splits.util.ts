@@ -5,6 +5,7 @@ import { SplitParticipantDto } from './dto/create-expense.dto';
 type TripParticipantRef = {
   id: string;
   userId: string;
+  sponsorId: string | null;
 };
 
 export type ExpenseSplitInput = {
@@ -54,15 +55,38 @@ export function buildExpenseSplits(params: {
       );
     }
 
-    const amountPerPerson = roundMoney(amount / participantIds.length);
-    const remainder = roundMoney(
-      amount - amountPerPerson * participantIds.length,
+    const byId = new Map(
+      tripParticipants.map((participant) => [participant.id, participant]),
     );
+    const selected = new Set(participantIds);
 
-    return participantIds.map((participantId, index) => ({
+    // Só dobra o dependente no patrocinador se o patrocinador também estiver
+    // no rateio; caso contrário, o dependente paga como participante independente.
+    const effectivePayerOf = (id: string): string => {
+      const participant = byId.get(id);
+      if (participant?.sponsorId && selected.has(participant.sponsorId)) {
+        return participant.sponsorId;
+      }
+      return id;
+    };
+
+    const payers: string[] = [];
+    const seen = new Set<string>();
+    for (const id of participantIds) {
+      const payer = effectivePayerOf(id);
+      if (!seen.has(payer)) {
+        seen.add(payer);
+        payers.push(payer);
+      }
+    }
+
+    const amountPerPayer = roundMoney(amount / payers.length);
+    const remainder = roundMoney(amount - amountPerPayer * payers.length);
+
+    return payers.map((participantId, index) => ({
       participantId,
       amount:
-        index === 0 ? roundMoney(amountPerPerson + remainder) : amountPerPerson,
+        index === 0 ? roundMoney(amountPerPayer + remainder) : amountPerPayer,
     }));
   }
 

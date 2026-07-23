@@ -167,7 +167,7 @@ export class ExpensesService {
 
     const allParticipants = await this.prisma.tripParticipant.findMany({
       where: { tripId },
-      select: { id: true, userId: true },
+      select: { id: true, userId: true, sponsorId: true },
     });
 
     const payer = allParticipants.find(
@@ -252,7 +252,7 @@ export class ExpensesService {
       shouldRebuildSplits || paidById
         ? await this.prisma.tripParticipant.findMany({
           where: { tripId },
-          select: { id: true, userId: true },
+          select: { id: true, userId: true, sponsorId: true },
         })
         : [];
 

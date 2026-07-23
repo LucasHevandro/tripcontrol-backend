@@ -138,7 +138,8 @@ export const TripParticipantScalarFieldEnum = {
   tripId: 'tripId',
   userId: 'userId',
   role: 'role',
-  joinedAt: 'joinedAt'
+  joinedAt: 'joinedAt',
+  sponsorId: 'sponsorId'
 } as const
 
 export type TripParticipantScalarFieldEnum = (typeof TripParticipantScalarFieldEnum)[keyof typeof TripParticipantScalarFieldEnum]
