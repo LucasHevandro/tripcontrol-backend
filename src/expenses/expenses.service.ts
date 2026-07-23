@@ -11,12 +11,14 @@ import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { SplitType } from '../generated/prisma/enums';
 import { CreatePaymentDto } from './dto/create-payment-dto';
 import { buildExpenseSplits } from './expense-splits.util';
+import { BalanceCalculatorService } from '../finances/balance.service';
 
 @Injectable()
 export class ExpensesService {
   constructor(
     private prisma: PrismaService,
     private tripsService: TripsService,
+    private balanceCalc: BalanceCalculatorService,
   ) { }
 
   // ─── Listar despesas ──────────────────────────────────────────────────────
@@ -99,7 +101,7 @@ export class ExpensesService {
 
     const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
-      select: { name: true, startDate: true },
+      select: { name: true, startDate: true, budget: true },
     });
 
     if (!trip) throw new NotFoundException('Viagem não encontrada');
@@ -111,9 +113,11 @@ export class ExpensesService {
       },
     });
 
-    const participantCount = await this.prisma.tripParticipant.count({
+    const tripParticipants = await this.prisma.tripParticipant.findMany({
       where: { tripId },
+      select: { id: true, userId: true },
     });
+    const participantCount = tripParticipants.length;
 
     const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
     const sharedTotal = expenses
@@ -143,6 +147,23 @@ export class ExpensesService {
       }))
       .sort((a, b) => b.total - a.total);
 
+    const budget = Number(trip.budget);
+    const isOverBudget = budget > 0 && totalSpent > budget;
+
+    const balances = await this.balanceCalc.calculateBalances(
+      tripId,
+      tripParticipants,
+    );
+    const hasPendingSettlements = Array.from(balances.values()).some(
+      (b) => Math.abs(b.balance) > 0.01,
+    );
+
+    const groupBalanceLabel = isOverBudget
+      ? 'Estourado'
+      : hasPendingSettlements
+        ? 'Pendente'
+        : 'Equilibrado';
+
     return {
       tripName: trip.name,
       tripPeriod: trip.startDate.toLocaleDateString('pt-BR', {
@@ -155,7 +176,8 @@ export class ExpensesService {
       participantCount,
       largestExpenseAmount: largest ? Number(largest.amount) : 0,
       largestExpenseDescription: largest?.description ?? '',
-      groupBalanceLabel: 'Equilibrado',
+      budget,
+      groupBalanceLabel,
       categoryBreakdown,
     };
   }

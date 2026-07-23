@@ -11,6 +11,13 @@ import { InviteByEmailDto } from './dto/invite-by-email.dto';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
 import { BalanceCalculatorService } from '../finances/balance.service';
+import { TripStatus } from '../generated/prisma/enums';
+
+const TRIP_STATUS_LABEL: Record<TripStatus, string> = {
+  PLANNING: 'Planejando',
+  ONGOING: 'Ativo',
+  COMPLETED: 'Concluída',
+};
 
 type ParticipantForBalance = {
   id: string;
@@ -52,7 +59,13 @@ export class ParticipantsService {
 
     const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
-      select: { name: true, startDate: true, endDate: true, budget: true },
+      select: {
+        name: true,
+        startDate: true,
+        endDate: true,
+        budget: true,
+        status: true,
+      },
     });
 
     if (!trip) throw new NotFoundException('Viagem não encontrada');
@@ -80,16 +93,20 @@ export class ParticipantsService {
       participantsWithBalance,
     );
 
-    const tripData = await this.prisma.trip.findUnique({
-      where: { id: tripId },
-      select: { inviteToken: true },
-    });
+    const [tripData, pendingInvitesCount] = await Promise.all([
+      this.prisma.trip.findUnique({
+        where: { id: tripId },
+        select: { inviteToken: true },
+      }),
+      this.prisma.invite.count({
+        where: { tripId, status: 'PENDING' },
+      }),
+    ]);
 
     return {
       tripName: trip.name,
       tripPeriod: this.formatPeriod(trip.startDate, trip.endDate),
       participantCount: participants.length,
-      maxParticipants: 10,
       organizerCount: participants.filter((p) => p.role === 'ORGANIZER').length,
       totalSpent: Math.round(totalSpent * 100) / 100,
       perPersonAverage:
@@ -101,8 +118,11 @@ export class ParticipantsService {
         Math.round(
           pendingSettlements.reduce((sum, s) => sum + s.amount, 0) * 100,
         ) / 100,
-      groupStatusLabel: 'Ativo',
-      groupStatusSublabel: 'todos confirmados',
+      groupStatusLabel: TRIP_STATUS_LABEL[trip.status],
+      groupStatusSublabel:
+        pendingInvitesCount > 0
+          ? `${pendingInvitesCount} convite${pendingInvitesCount > 1 ? 's' : ''} pendente${pendingInvitesCount > 1 ? 's' : ''}`
+          : 'todos confirmados',
       inviteLink: this.buildInviteLink(tripData?.inviteToken),
       participants: participantsWithBalance,
       settlementSummary: pendingSettlements,

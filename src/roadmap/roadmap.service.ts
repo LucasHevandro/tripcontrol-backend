@@ -38,8 +38,17 @@ export class RoadmapService {
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
     });
 
+    const participantCount = await this.prisma.tripParticipant.count({
+      where: { tripId },
+    });
+
     // Agrupa atividades por dia
-    const days = this.buildDays(trip.startDate, trip.endDate, activities);
+    const days = this.buildDays(
+      trip.startDate,
+      trip.endDate,
+      activities,
+      participantCount,
+    );
 
     // Reservas ativas
     const reservations = await this.prisma.reservation.findMany({
@@ -47,6 +56,7 @@ export class RoadmapService {
       select: {
         id: true,
         title: true,
+        subtitle: true,
         category: true,
         status: true,
       },
@@ -67,7 +77,7 @@ export class RoadmapService {
       activeReservations: reservations.map((r) => ({
         id: r.id,
         title: r.title,
-        subtitle: '',
+        subtitle: r.subtitle ?? '',
         status: r.status.toLowerCase(),
         icon: this.mapReservationIcon(r.category),
       })),
@@ -166,7 +176,12 @@ export class RoadmapService {
     return activity;
   }
 
-  private buildDays(startDate: Date, endDate: Date, activities: any[]) {
+  private buildDays(
+    startDate: Date,
+    endDate: Date,
+    activities: any[],
+    participantCount: number,
+  ) {
     const days: {
       date: string;
       label: string;
@@ -200,7 +215,7 @@ export class RoadmapService {
           month: 'long',
         }),
         activityCount: dayActivities.length,
-        participantCount: 0,
+        participantCount,
         activities: dayActivities.map((a) => this.formatActivity(a)),
       });
 

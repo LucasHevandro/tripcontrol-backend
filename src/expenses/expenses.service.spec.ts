@@ -17,10 +17,15 @@ describe('ExpensesService', () => {
       },
     };
     const tripsService = {};
+    const balanceCalc = {};
 
     return {
       prisma,
-      service: new ExpensesService(prisma as any, tripsService as any),
+      service: new ExpensesService(
+        prisma as any,
+        tripsService as any,
+        balanceCalc as any,
+      ),
     };
   };
 
