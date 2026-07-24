@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { envValidationSchema } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { EmailModule } from './email/email.module';
@@ -18,6 +20,7 @@ import { ReservationsModule } from './reservations/reservations.module';
       envFilePath: '.env',
       validationSchema: envValidationSchema,
     }),
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 20 }]),
     PrismaModule,
     EmailModule,
     AuthModule,
@@ -28,5 +31,6 @@ import { ReservationsModule } from './reservations/reservations.module';
     RoadmapModule,
     ReservationsModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule { }

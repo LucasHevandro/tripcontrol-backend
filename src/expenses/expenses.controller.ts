@@ -13,6 +13,7 @@ import {
   UploadedFile,
   Post as HttpPost,
   Query as QueryParam,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -112,6 +113,16 @@ export class ExpensesController {
           cb(null, `receipt-${unique}${extname(file.originalname)}`);
         },
       }),
+      fileFilter: (_req, file, cb) => {
+        const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
+        if (!allowed.includes(file.mimetype)) {
+          return cb(
+            new BadRequestException('Formato não suportado. Use JPG, PNG ou PDF'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
       limits: { fileSize: 5 * 1024 * 1024 },
     }),
   )

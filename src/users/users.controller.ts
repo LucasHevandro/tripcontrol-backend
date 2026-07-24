@@ -9,6 +9,7 @@ import {
     UploadedFile,
     HttpCode,
     HttpStatus,
+    BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -80,6 +81,16 @@ export class UsersController {
                     cb(null, `avatar-${uniqueSuffix}${extname(file.originalname)}`);
                 },
             }),
+            fileFilter: (_req, file, cb) => {
+                const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+                if (!allowed.includes(file.mimetype)) {
+                    return cb(
+                        new BadRequestException('Formato não suportado. Use JPG, PNG ou WebP'),
+                        false,
+                    );
+                }
+                cb(null, true);
+            },
             limits: { fileSize: 5 * 1024 * 1024 },
         }),
     )

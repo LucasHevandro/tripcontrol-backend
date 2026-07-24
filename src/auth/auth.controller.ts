@@ -7,6 +7,7 @@ import {
     HttpCode,
     HttpStatus,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
     ApiTags,
     ApiOperation,
@@ -30,6 +31,7 @@ export class AuthController {
     constructor(private authService: AuthService) { }
 
     @Post('register')
+    @Throttle({ default: { limit: 5, ttl: 60_000 } })
     @ApiOperation({ summary: 'Cadastrar novo usuário' })
     @ApiCreatedResponse({ description: 'Usuário criado com sucesso' })
     @ApiConflictResponse({ description: 'E-mail já cadastrado' })
@@ -38,6 +40,7 @@ export class AuthController {
     }
 
     @Post('login')
+    @Throttle({ default: { limit: 5, ttl: 60_000 } })
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Login com e-mail e senha' })
     @ApiOkResponse({ description: 'Login realizado com sucesso' })
