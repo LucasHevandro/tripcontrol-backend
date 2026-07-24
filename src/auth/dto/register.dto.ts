@@ -4,7 +4,6 @@ import {
   MinLength,
   MaxLength,
   IsOptional,
-  Matches,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -23,7 +22,7 @@ export class RegisterDto {
   @IsString()
   @MinLength(8)
   @MaxLength(64)
-  password?: string;
+  password: string;
 
   @ApiPropertyOptional({ example: '(44) 99876-5432' })
   @IsOptional()

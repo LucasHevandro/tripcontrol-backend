@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -12,6 +11,39 @@ import {
   ReservationCategory,
   ReservationStatus,
 } from '../generated/prisma/enums';
+import type { ReservationModel } from '../generated/prisma/models';
+
+// Campos específicos por categoria, armazenados soltos no Json `details` —
+// nenhuma categoria usa todos, cada uma lê só os campos que lhe interessam.
+export interface ReservationDetails {
+  checkIn?: string;
+  checkOut?: string;
+  guestCount?: string | number;
+  roomCount?: string | number;
+  address?: string;
+  reservationCode?: string;
+  departureDate?: string;
+  flightNumber?: string;
+  departureTime?: string;
+  arrivalTime?: string;
+  returnDate?: string;
+  returnFlightNumber?: string;
+  returnTime?: string;
+  passengerCount?: string | number;
+  cabinClass?: string;
+  locator?: string;
+  pickupDate?: string;
+  pickupTime?: string;
+  pickupLocation?: string;
+  carModel?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  peopleCount?: string | number;
+  meetingPoint?: string;
+  amountSublabel?: string;
+  warning?: string;
+}
 
 @Injectable()
 export class ReservationsService {
@@ -153,8 +185,8 @@ export class ReservationsService {
     return reservation;
   }
 
-  private formatReservation(r: any) {
-    const details = (r.details as Record<string, any>) ?? {};
+  private formatReservation(r: ReservationModel) {
+    const details = (r.details as ReservationDetails | null) ?? {};
 
     const detailLines = this.buildDetailLines(r.category, details);
     const primaryAction = this.buildPrimaryAction(r.id, r.status, r.category);
@@ -179,7 +211,7 @@ export class ReservationsService {
 
   private buildDetailLines(
     category: ReservationCategory,
-    details: Record<string, any>,
+    details: ReservationDetails,
   ): string[] {
     switch (category) {
       case ReservationCategory.HOTEL:
@@ -256,25 +288,25 @@ export class ReservationsService {
     return map[category] ?? '';
   }
 
-  private getNextCheckin(reservations: any[]): string {
+  private getNextCheckin(reservations: ReservationModel[]): string {
     const hotel = reservations.find(
       (r) =>
         r.category === ReservationCategory.HOTEL &&
         r.status === ReservationStatus.CONFIRMED,
     );
     if (!hotel) return 'N/A';
-    const details = hotel.details as Record<string, any>;
+    const details = hotel.details as ReservationDetails | null;
     return details?.checkIn ?? 'N/A';
   }
 
-  private getNextFlight(reservations: any[]): string {
+  private getNextFlight(reservations: ReservationModel[]): string {
     const flight = reservations.find(
       (r) =>
         r.category === ReservationCategory.FLIGHT &&
         r.status === ReservationStatus.CONFIRMED,
     );
     if (!flight) return 'N/A';
-    const details = flight.details as Record<string, any>;
+    const details = flight.details as ReservationDetails | null;
     return details?.returnDate ?? details?.departureDate ?? 'N/A';
   }
 

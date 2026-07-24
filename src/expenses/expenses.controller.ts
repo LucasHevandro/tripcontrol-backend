@@ -11,7 +11,6 @@ import {
   HttpStatus,
   UseInterceptors,
   UploadedFile,
-  Post as HttpPost,
   Query as QueryParam,
   BadRequestException,
 } from '@nestjs/common';

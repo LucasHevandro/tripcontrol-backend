@@ -15,19 +15,21 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DestinationType, TripType } from '../../generated/prisma/enums';
 
 function IsAfterDate(property: string, validationOptions?: ValidationOptions) {
-  return function (object: object, propertyName: string) {
+  return function (target: object, propertyName: string) {
     registerDecorator({
       name: 'isAfterDate',
-      target: (object as any).constructor,
+      target: (target as { constructor: new (...args: unknown[]) => unknown })
+        .constructor,
       propertyName,
       constraints: [property],
       options: validationOptions,
       validator: {
         validate(value: string, args: ValidationArguments) {
-          const [relatedPropertyName] = args.constraints;
-          const relatedValue = (args.object as any)[relatedPropertyName];
+          const [relatedPropertyName] = args.constraints as string[];
+          const relatedObject = args.object as Record<string, unknown>;
+          const relatedValue = relatedObject[relatedPropertyName];
           if (!value || !relatedValue) return true;
-          return new Date(value) >= new Date(relatedValue);
+          return new Date(value) >= new Date(relatedValue as string);
         },
         defaultMessage(args: ValidationArguments) {
           return `${args.property} deve ser igual ou posterior à data de início`;

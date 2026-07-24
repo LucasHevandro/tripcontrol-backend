@@ -175,21 +175,27 @@ describe('ParticipantsService', () => {
       },
     ];
 
-    const mockRows = (prisma: any, rows = baseRows) => {
+    const mockRows = (
+      prisma: ReturnType<typeof createService>['prisma'],
+      rows = baseRows,
+    ) => {
       prisma.tripParticipant.findUnique.mockImplementation(
-        ({ where: { tripId_userId } }: any) =>
+        (args: {
+          where: { tripId_userId: { tripId: string; userId: string } };
+        }) =>
           Promise.resolve(
             rows.find(
               (r) =>
-                r.tripId === tripId_userId.tripId &&
-                r.userId === tripId_userId.userId,
+                r.tripId === args.where.tripId_userId.tripId &&
+                r.userId === args.where.tripId_userId.userId,
             ) ?? null,
           ),
       );
-      prisma.tripParticipant.count.mockImplementation(({ where }: any) =>
-        Promise.resolve(
-          rows.filter((r) => r.sponsorId === where.sponsorId).length,
-        ),
+      prisma.tripParticipant.count.mockImplementation(
+        (args: { where: { sponsorId: string } }) =>
+          Promise.resolve(
+            rows.filter((r) => r.sponsorId === args.where.sponsorId).length,
+          ),
       );
       prisma.tripParticipant.update.mockResolvedValue(undefined);
     };

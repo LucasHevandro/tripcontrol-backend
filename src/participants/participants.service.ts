@@ -602,9 +602,12 @@ export class ParticipantsService {
   }
 
   private formatPeriod(start: Date, end: Date): string {
+    const startDay = start.getDate();
+    const endDay = end.getDate();
     const month = end
       .toLocaleDateString('pt-BR', { month: 'short' })
       .replace('.', '');
-    return `${start.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')} ${start.getFullYear()}`;
+    const year = end.getFullYear();
+    return `${startDay}–${endDay} ${month} ${year}`;
   }
 }

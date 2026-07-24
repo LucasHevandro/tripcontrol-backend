@@ -1,13 +1,10 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TripsService } from '../trips/trips.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
 import { ActivityStatus, CostType } from '../generated/prisma/enums';
+import type { RoadmapActivityModel } from '../generated/prisma/models';
 
 @Injectable()
 export class RoadmapService {
@@ -177,7 +174,7 @@ export class RoadmapService {
   private buildDays(
     startDate: Date,
     endDate: Date,
-    activities: any[],
+    activities: RoadmapActivityModel[],
     participantCount: number,
   ) {
     const days: {
@@ -223,7 +220,7 @@ export class RoadmapService {
     return days;
   }
 
-  private formatActivity(a: any) {
+  private formatActivity(a: RoadmapActivityModel) {
     const costLabel = this.buildCostLabel(
       a.costType,
       a.costAmount ? Number(a.costAmount) : null,

@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class SetSponsorDto {
   @ApiProperty({ example: 'uuid-do-usuario-patrocinador', nullable: true })
-  @ValidateIf((o) => o.sponsorId !== null)
+  @ValidateIf((o: { sponsorId: string | null }) => o.sponsorId !== null)
   @IsString()
   sponsorId: string | null;
 }

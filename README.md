@@ -37,6 +37,106 @@ O projeto é organizado em módulos bem definidos, cada um com sua responsabilid
 
 ---
 
+## 🗺️ Modelo de dados
+
+```mermaid
+erDiagram
+    USER ||--o{ TRIP_PARTICIPANT : "participa de"
+    USER ||--o{ REFRESH_TOKEN : possui
+    USER ||--o{ INVITE : envia
+    USER ||--o{ EXPENSE : paga
+
+    TRIP ||--o{ TRIP_PARTICIPANT : tem
+    TRIP ||--o{ EXPENSE : tem
+    TRIP ||--o{ RESERVATION : tem
+    TRIP ||--o{ ROADMAP_ACTIVITY : tem
+    TRIP ||--o{ INVITE : tem
+    TRIP ||--o{ PAYMENT : tem
+
+    TRIP_PARTICIPANT ||--o{ EXPENSE_SPLIT : "deve em"
+    TRIP_PARTICIPANT ||--o{ PAYMENT : "paga (fromParticipant)"
+    TRIP_PARTICIPANT ||--o{ PAYMENT : "recebe (toParticipant)"
+    TRIP_PARTICIPANT }o--o| TRIP_PARTICIPANT : "patrocina (sponsorId)"
+
+    EXPENSE ||--o{ EXPENSE_SPLIT : divide
+
+    USER {
+        string id PK
+        string email UK
+        string password "null se login via Google"
+        string googleId UK
+    }
+    TRIP {
+        string id PK
+        string status "PLANNING | ONGOING | COMPLETED"
+        decimal budget
+    }
+    TRIP_PARTICIPANT {
+        string id PK
+        string tripId FK
+        string userId FK
+        string sponsorId FK "nível único, ver seção de IDs abaixo"
+        string role "ORGANIZER | MEMBER"
+    }
+    EXPENSE {
+        string id PK
+        string tripId FK
+        string paidById FK "User.id"
+        decimal amount
+        string splitType "EQUAL | CUSTOM | INDIVIDUAL"
+    }
+    EXPENSE_SPLIT {
+        string id PK
+        string expenseId FK
+        string participantId FK "TripParticipant.id"
+        decimal amount
+    }
+    PAYMENT {
+        string id PK
+        string fromParticipantId FK "TripParticipant.id"
+        string toParticipantId FK "TripParticipant.id"
+        decimal amount
+    }
+    RESERVATION {
+        string id PK
+        string tripId FK
+        string category "HOTEL | FLIGHT | CAR | TOUR"
+        json details "campos variam por categoria"
+    }
+    ROADMAP_ACTIVITY {
+        string id PK
+        string tripId FK
+        string title
+        date date
+    }
+    INVITE {
+        string id PK
+        string tripId FK
+        string invitedBy FK "User.id"
+        string status "PENDING | ACCEPTED | EXPIRED"
+    }
+    REFRESH_TOKEN {
+        string id PK
+        string userId FK
+        string token UK "hash SHA-256"
+    }
+```
+
+### `TripParticipant.id` vs `User.id` — qual usar onde
+
+O ponto que mais gera confusão no código: existem dois "ids de pessoa" diferentes, e a API mistura os dois de propósito conforme o contexto.
+
+| Campo | Referencia | Onde aparece |
+|---|---|---|
+| `User.id` | a conta/pessoa em si, independente da viagem | `Expense.paidById`, `Invite.invitedBy`, o campo `id` que a API expõe pra cada participante em `GET /participants` |
+| `TripParticipant.id` | a participação de uma pessoa numa viagem específica | `ExpenseSplit.participantId`, `Payment.fromParticipantId`/`toParticipantId`, `TripParticipant.sponsorId` |
+
+Por quê os dois existem: a mesma pessoa (`User`) pode participar de várias viagens, e `TripParticipant` é o registro dessa participação em uma viagem específica — é nele que saldos, splits e o vínculo de dependente (`sponsorId`) se apoiam, porque fazem sentido só *dentro* de uma viagem. Já `Expense.paidById` e `Invite.invitedBy` referenciam `User.id` diretamente porque essas ações pertencem à pessoa, não a uma participação específica.
+
+Na prática: os endpoints REST (`/participants`, `/expenses` etc.) sempre falam em `User.id` no corpo da requisição e resposta — o frontend nunca precisa saber que `TripParticipant.id` existe. A tradução entre os dois acontece dentro dos services (ex: `participants.service.ts`, `expenses.service.ts`), geralmente via `tripId_userId` (a chave composta única de `TripParticipant`).
+
+---
+
 ## ⚡ Início Rápido
 
 ### Pré-requisitos

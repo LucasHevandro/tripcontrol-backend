@@ -9,5 +9,5 @@ export class LoginDto {
   @ApiProperty({ example: 'MinhaSenh@123' })
   @IsString()
   @MinLength(8)
-  password?: string; // Opcional para login via Google
+  password: string;
 }
