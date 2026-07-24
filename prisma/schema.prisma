@@ -42,6 +42,7 @@ model RefreshToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
 
+  @@index([userId])
   @@map("refresh_tokens")
 }
 
@@ -124,6 +125,7 @@ model TripParticipant {
   expenseSplits ExpenseSplit[]
 
   @@unique([tripId, userId])
+  @@index([userId])
   @@map("trip_participants")
 }
 
@@ -148,6 +150,7 @@ model Invite {
   trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
   user User @relation(fields: [invitedBy], references: [id])
 
+  @@index([tripId])
   @@map("invites")
 }
 
@@ -177,6 +180,7 @@ model Expense {
   paidBy   User              @relation(fields: [paidById], references: [id])
   splits   ExpenseSplit[]
 
+  @@index([tripId])
   @@map("expenses")
 }
 
@@ -190,6 +194,7 @@ model ExpenseSplit {
   participant TripParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   @@unique([expenseId, participantId])
+  @@index([participantId])
   @@map("expense_splits")
 }
 
@@ -225,6 +230,7 @@ model RoadmapActivity {
 
   trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
+  @@index([tripId])
   @@map("roadmap_activities")
 }
 
@@ -263,6 +269,7 @@ model Reservation {
 
   trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
+  @@index([tripId])
   @@map("reservations")
 }
 

@@ -152,44 +152,57 @@ export class ParticipantsService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    const invites = await Promise.all(
-      dto.emails.map(async (email) => {
-        // Verifica se já existe participante com esse e-mail
-        const existingUser = await this.prisma.user.findUnique({
-          where: { email },
-        });
+    // Batch: descobre de uma vez quais e-mails já têm conta e já são participantes
+    const existingUsers = await this.prisma.user.findMany({
+      where: { email: { in: dto.emails } },
+      select: { id: true, email: true },
+    });
+    const userIdByEmail = new Map(existingUsers.map((u) => [u.email, u.id]));
 
-        if (existingUser) {
-          const alreadyParticipant =
-            await this.prisma.tripParticipant.findUnique({
-              where: {
-                tripId_userId: { tripId, userId: existingUser.id },
-              },
-            });
-          if (alreadyParticipant) return null;
-        }
+    const existingUserIds = existingUsers.map((u) => u.id);
+    const existingParticipants = existingUserIds.length
+      ? await this.prisma.tripParticipant.findMany({
+          where: { tripId, userId: { in: existingUserIds } },
+          select: { userId: true },
+        })
+      : [];
+    const alreadyParticipantUserIds = new Set(
+      existingParticipants.map((p) => p.userId),
+    );
 
-        const invite = await this.prisma.invite.create({
-          data: { tripId, invitedBy: userId, email, expiresAt },
-        });
+    const emailsToInvite = dto.emails.filter((email) => {
+      const uid = userIdByEmail.get(email);
+      return !uid || !alreadyParticipantUserIds.has(uid);
+    });
 
-        // Envia o e-mail de convite (não bloqueia em caso de falha)
-        await this.email.sendInvite({
-          to: email,
+    if (emailsToInvite.length === 0) {
+      return { message: '0 convite(s) enviado(s) com sucesso', invites: [] };
+    }
+
+    const createdInvites = await this.prisma.invite.createManyAndReturn({
+      data: emailsToInvite.map((email) => ({
+        tripId,
+        invitedBy: userId,
+        email,
+        expiresAt,
+      })),
+    });
+
+    // Envia os e-mails de convite (não bloqueia em caso de falha individual)
+    await Promise.all(
+      createdInvites.map((invite) =>
+        this.email.sendInvite({
+          to: invite.email!,
           tripName,
           inviterName,
           inviteToken: invite.token,
-        });
-
-        return invite;
-      }),
+        }),
+      ),
     );
 
-    const sent = invites.filter(Boolean).length;
-
     return {
-      message: `${sent} convite(s) enviado(s) com sucesso`,
-      invites: invites.filter(Boolean),
+      message: `${createdInvites.length} convite(s) enviado(s) com sucesso`,
+      invites: createdInvites,
     };
   }
 
