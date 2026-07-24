@@ -33,4 +33,4 @@ import { ReservationsModule } from './reservations/reservations.module';
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
-export class AppModule { }
+export class AppModule {}

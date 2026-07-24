@@ -19,7 +19,7 @@ export class ExpensesService {
     private prisma: PrismaService,
     private tripsService: TripsService,
     private balanceCalc: BalanceCalculatorService,
-  ) { }
+  ) {}
 
   // ─── Listar despesas ──────────────────────────────────────────────────────
   async findAll(
@@ -271,9 +271,9 @@ export class ExpensesService {
     const participants =
       shouldRebuildSplits || paidById
         ? await this.prisma.tripParticipant.findMany({
-          where: { tripId },
-          select: { id: true, userId: true, sponsorId: true },
-        })
+            where: { tripId },
+            select: { id: true, userId: true, sponsorId: true },
+          })
         : [];
 
     if (
@@ -285,11 +285,11 @@ export class ExpensesService {
 
     const splits = shouldRebuildSplits
       ? buildExpenseSplits({
-        amount: nextAmount,
-        splitType: nextSplitType,
-        splitParticipants,
-        tripParticipants: participants,
-      })
+          amount: nextAmount,
+          splitType: nextSplitType,
+          splitParticipants,
+          tripParticipants: participants,
+        })
       : undefined;
 
     return this.prisma.$transaction(async (tx) => {

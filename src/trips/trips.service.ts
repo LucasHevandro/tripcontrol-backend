@@ -11,7 +11,10 @@ import { BalanceCalculatorService } from '../finances/balance.service';
 
 @Injectable()
 export class TripsService {
-  constructor(private prisma: PrismaService, private balanceCalc: BalanceCalculatorService) { }
+  constructor(
+    private prisma: PrismaService,
+    private balanceCalc: BalanceCalculatorService,
+  ) {}
 
   // ─── Listar viagens do usuário ────────────────────────────────────────────
 

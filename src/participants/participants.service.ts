@@ -41,7 +41,7 @@ export class ParticipantsService {
     private config: ConfigService,
     private email: EmailService,
     private readonly balanceCalc: BalanceCalculatorService,
-  ) { }
+  ) {}
 
   /** Monta o link de convite usando a URL do frontend configurada por ambiente */
   private buildInviteLink(inviteToken: string | undefined): string {
@@ -482,9 +482,7 @@ export class ParticipantsService {
       tripId,
       participants.map((p) => ({ id: p.id, userId: p.userId })),
     );
-    const byTripParticipantId = new Map(
-      participants.map((p) => [p.id, p]),
-    );
+    const byTripParticipantId = new Map(participants.map((p) => [p.id, p]));
 
     return participants.map((participant) => {
       const b = balances.get(participant.id)!;

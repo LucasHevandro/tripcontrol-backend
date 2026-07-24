@@ -41,7 +41,7 @@ describe('ParticipantsService', () => {
         tripsService as any,
         {} as any,
         {} as any,
-        balanceCalc as any,
+        balanceCalc,
       ),
     };
   };
@@ -102,11 +102,41 @@ describe('ParticipantsService', () => {
     // Ana: organizadora, Bruno: membro comum, Bruno-esposa: dependente de Bruno,
     // Carlos: já patrocina alguém em outra viagem (para o teste de trip cruzado).
     const baseRows = [
-      { id: 'p-ana', tripId: TRIP, userId: 'user-ana', role: 'ORGANIZER', sponsorId: null },
-      { id: 'p-bruno', tripId: TRIP, userId: 'user-bruno', role: 'MEMBER', sponsorId: null },
-      { id: 'p-bruno-esposa', tripId: TRIP, userId: 'user-bruno-esposa', role: 'MEMBER', sponsorId: 'p-bruno' },
-      { id: 'p-carlos', tripId: TRIP, userId: 'user-carlos', role: 'MEMBER', sponsorId: null },
-      { id: 'p-outro', tripId: OTHER_TRIP, userId: 'user-outro', role: 'MEMBER', sponsorId: null },
+      {
+        id: 'p-ana',
+        tripId: TRIP,
+        userId: 'user-ana',
+        role: 'ORGANIZER',
+        sponsorId: null,
+      },
+      {
+        id: 'p-bruno',
+        tripId: TRIP,
+        userId: 'user-bruno',
+        role: 'MEMBER',
+        sponsorId: null,
+      },
+      {
+        id: 'p-bruno-esposa',
+        tripId: TRIP,
+        userId: 'user-bruno-esposa',
+        role: 'MEMBER',
+        sponsorId: 'p-bruno',
+      },
+      {
+        id: 'p-carlos',
+        tripId: TRIP,
+        userId: 'user-carlos',
+        role: 'MEMBER',
+        sponsorId: null,
+      },
+      {
+        id: 'p-outro',
+        tripId: OTHER_TRIP,
+        userId: 'user-outro',
+        role: 'MEMBER',
+        sponsorId: null,
+      },
     ];
 
     const mockRows = (prisma: any, rows = baseRows) => {
@@ -121,7 +151,9 @@ describe('ParticipantsService', () => {
           ),
       );
       prisma.tripParticipant.count.mockImplementation(({ where }: any) =>
-        Promise.resolve(rows.filter((r) => r.sponsorId === where.sponsorId).length),
+        Promise.resolve(
+          rows.filter((r) => r.sponsorId === where.sponsorId).length,
+        ),
       );
       prisma.tripParticipant.update.mockResolvedValue(undefined);
     };

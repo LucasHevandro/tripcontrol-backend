@@ -70,7 +70,11 @@ describe('buildExpenseSplits', () => {
       { id: 'bruno', userId: 'user-bruno', sponsorId: null },
       { id: 'bruno-esposa', userId: 'user-bruno-esposa', sponsorId: 'bruno' },
       { id: 'carlos', userId: 'user-carlos', sponsorId: null },
-      { id: 'carlos-esposa', userId: 'user-carlos-esposa', sponsorId: 'carlos' },
+      {
+        id: 'carlos-esposa',
+        userId: 'user-carlos-esposa',
+        sponsorId: 'carlos',
+      },
       { id: 'carlos-filho', userId: 'user-carlos-filho', sponsorId: 'carlos' },
     ];
 

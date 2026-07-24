@@ -6,7 +6,7 @@ const MUTED = '#737373';
 const BORDER = '#e5e5e5';
 
 function layout(content: string): string {
-    return `
+  return `
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -44,7 +44,7 @@ function layout(content: string): string {
 }
 
 function button(label: string, href: string): string {
-    return `
+  return `
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
     <tr>
         <td style="border-radius:8px; background-color:${BRAND};">
@@ -58,11 +58,11 @@ function button(label: string, href: string): string {
 }
 
 export function inviteTemplate(params: {
-    tripName: string;
-    inviterName: string;
-    inviteUrl: string;
+  tripName: string;
+  inviterName: string;
+  inviteUrl: string;
 }): string {
-    const content = `
+  const content = `
         <h1 style="margin:0 0 8px; font-size:20px; color:${TEXT};">Você foi convidado para uma viagem!</h1>
         <p style="margin:0 0 16px; font-size:15px; line-height:1.5; color:${MUTED};">
             <strong style="color:${TEXT};">${params.inviterName}</strong> convidou você para participar da viagem
@@ -77,17 +77,17 @@ export function inviteTemplate(params: {
             <a href="${params.inviteUrl}" style="color:${BRAND}; word-break:break-all;">${params.inviteUrl}</a>
         </p>
     `;
-    return layout(content);
+  return layout(content);
 }
 
 export function debtorNotificationTemplate(params: {
-    debtorName: string;
-    tripName: string;
-    amount: string;
-    toName: string;
-    appUrl: string;
+  debtorName: string;
+  tripName: string;
+  amount: string;
+  toName: string;
+  appUrl: string;
 }): string {
-    const content = `
+  const content = `
         <h1 style="margin:0 0 8px; font-size:20px; color:${TEXT};">Lembrete de acerto 💸</h1>
         <p style="margin:0 0 16px; font-size:15px; line-height:1.5; color:${MUTED};">
             Olá, <strong style="color:${TEXT};">${params.debtorName}</strong>! Este é um lembrete de que você tem um
@@ -106,5 +106,5 @@ export function debtorNotificationTemplate(params: {
         </p>
         ${button('Ver acertos', params.appUrl)}
     `;
-    return layout(content);
+  return layout(content);
 }

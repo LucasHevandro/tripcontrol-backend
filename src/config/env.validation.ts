@@ -1,45 +1,31 @@
 import * as Joi from 'joi';
 
 export const envValidationSchema = Joi.object({
-    NODE_ENV: Joi.string()
-        .valid('development', 'test', 'production')
-        .default('development'),
+  NODE_ENV: Joi.string()
+    .valid('development', 'test', 'production')
+    .default('development'),
 
-    PORT: Joi.number().default(3000),
+  PORT: Joi.number().default(3000),
 
-    DATABASE_URL: Joi.string()
-        .uri({ scheme: ['postgres', 'postgresql'] })
-        .required(),
+  DATABASE_URL: Joi.string()
+    .uri({ scheme: ['postgres', 'postgresql'] })
+    .required(),
 
-    JWT_SECRET: Joi.string()
-        .min(32)
-        .required(),
+  JWT_SECRET: Joi.string().min(32).required(),
 
-    JWT_REFRESH_SECRET: Joi.string()
-        .min(32)
-        .required(),
+  JWT_REFRESH_SECRET: Joi.string().min(32).required(),
 
-    JWT_EXPIRES_IN: Joi.string()
-        .default('15m'),
+  JWT_EXPIRES_IN: Joi.string().default('15m'),
 
-    JWT_REFRESH_EXPIRES_IN: Joi.string()
-        .default('30d'),
+  JWT_REFRESH_EXPIRES_IN: Joi.string().default('30d'),
 
-    FRONTEND_URL: Joi.string()
-        .uri()
-        .required(),
+  FRONTEND_URL: Joi.string().uri().required(),
 
-    // OAuth Google — opcional (login com Google só funciona se configurado)
-    GOOGLE_CLIENT_ID: Joi.string()
-        .allow('')
-        .optional(),
+  // OAuth Google — opcional (login com Google só funciona se configurado)
+  GOOGLE_CLIENT_ID: Joi.string().allow('').optional(),
 
-    // E-mail (Resend) — opcional; se ausente, e-mails são apenas logados
-    RESEND_API_KEY: Joi.string()
-        .allow('')
-        .optional(),
+  // E-mail (Resend) — opcional; se ausente, e-mails são apenas logados
+  RESEND_API_KEY: Joi.string().allow('').optional(),
 
-    EMAIL_FROM: Joi.string()
-        .allow('')
-        .optional(),
+  EMAIL_FROM: Joi.string().allow('').optional(),
 });

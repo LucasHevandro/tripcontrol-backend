@@ -5,9 +5,9 @@ import { TripsModule } from '../trips/trips.module';
 import { FinancesModule } from '../finances/finances.module';
 
 @Module({
-    imports: [TripsModule, FinancesModule],
-    controllers: [ExpensesController, PaymentsController],
-    providers: [ExpensesService],
-    exports: [ExpensesService],
+  imports: [TripsModule, FinancesModule],
+  controllers: [ExpensesController, PaymentsController],
+  providers: [ExpensesService],
+  exports: [ExpensesService],
 })
-export class ExpensesModule { }
+export class ExpensesModule {}

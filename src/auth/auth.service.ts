@@ -280,7 +280,7 @@ export class AuthService {
       d: 24 * 60 * 60 * 1000,
     };
 
-    return amount * multipliers[unit as keyof typeof multipliers];
+    return amount * multipliers[unit];
   }
 
   private parseDurationToSeconds(value: string) {

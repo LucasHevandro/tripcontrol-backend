@@ -1,21 +1,21 @@
 import {
-    Controller,
-    Post,
-    Get,
-    Body,
-    UseGuards,
-    HttpCode,
-    HttpStatus,
+  Controller,
+  Post,
+  Get,
+  Body,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
-    ApiTags,
-    ApiOperation,
-    ApiBearerAuth,
-    ApiCreatedResponse,
-    ApiOkResponse,
-    ApiUnauthorizedResponse,
-    ApiConflictResponse,
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiUnauthorizedResponse,
+  ApiConflictResponse,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -28,59 +28,61 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
-    @Post('register')
-    @Throttle({ default: { limit: 5, ttl: 60_000 } })
-    @ApiOperation({ summary: 'Cadastrar novo usuário' })
-    @ApiCreatedResponse({ description: 'Usuário criado com sucesso' })
-    @ApiConflictResponse({ description: 'E-mail já cadastrado' })
-    register(@Body() dto: RegisterDto) {
-        return this.authService.register(dto);
-    }
+  @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Cadastrar novo usuário' })
+  @ApiCreatedResponse({ description: 'Usuário criado com sucesso' })
+  @ApiConflictResponse({ description: 'E-mail já cadastrado' })
+  register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
+  }
 
-    @Post('login')
-    @Throttle({ default: { limit: 5, ttl: 60_000 } })
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Login com e-mail e senha' })
-    @ApiOkResponse({ description: 'Login realizado com sucesso' })
-    @ApiUnauthorizedResponse({ description: 'Credenciais inválidas' })
-    login(@Body() dto: LoginDto) {
-        return this.authService.login(dto);
-    }
+  @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login com e-mail e senha' })
+  @ApiOkResponse({ description: 'Login realizado com sucesso' })
+  @ApiUnauthorizedResponse({ description: 'Credenciais inválidas' })
+  login(@Body() dto: LoginDto) {
+    return this.authService.login(dto);
+  }
 
-    @Post('google')
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Login/cadastro com conta Google' })
-    @ApiOkResponse({ description: 'Autenticação com Google realizada com sucesso' })
-    @ApiUnauthorizedResponse({ description: 'Token do Google inválido' })
-    googleLogin(@Body() dto: GoogleLoginDto) {
-        return this.authService.googleLogin(dto.credential);
-    }
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login/cadastro com conta Google' })
+  @ApiOkResponse({
+    description: 'Autenticação com Google realizada com sucesso',
+  })
+  @ApiUnauthorizedResponse({ description: 'Token do Google inválido' })
+  googleLogin(@Body() dto: GoogleLoginDto) {
+    return this.authService.googleLogin(dto.credential);
+  }
 
-    @Post('refresh')
-    @HttpCode(HttpStatus.OK)
-    @UseGuards(JwtRefreshGuard)
-    @ApiBearerAuth()
-    @ApiOperation({ summary: 'Renovar access token usando refresh token' })
-    refresh(@CurrentUser() user: { id: string; refreshToken: string }) {
-        return this.authService.refresh(user.id, user.refreshToken);
-    }
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtRefreshGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Renovar access token usando refresh token' })
+  refresh(@CurrentUser() user: { id: string; refreshToken: string }) {
+    return this.authService.refresh(user.id, user.refreshToken);
+  }
 
-    @Post('logout')
-    @HttpCode(HttpStatus.OK)
-    @UseGuards(JwtGuard)
-    @ApiBearerAuth()
-    @ApiOperation({ summary: 'Encerrar sessão e invalidar tokens' })
-    logout(@CurrentUser() user: { id: string }) {
-        return this.authService.logout(user.id);
-    }
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Encerrar sessão e invalidar tokens' })
+  logout(@CurrentUser() user: { id: string }) {
+    return this.authService.logout(user.id);
+  }
 
-    @Get('me')
-    @UseGuards(JwtGuard)
-    @ApiBearerAuth()
-    @ApiOperation({ summary: 'Retornar dados do usuário autenticado' })
-    me(@CurrentUser() user: { id: string }) {
-        return this.authService.me(user.id);
-    }
+  @Get('me')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Retornar dados do usuário autenticado' })
+  me(@CurrentUser() user: { id: string }) {
+    return this.authService.me(user.id);
+  }
 }
