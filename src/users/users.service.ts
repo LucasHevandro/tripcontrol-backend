@@ -69,6 +69,12 @@ export class UsersService {
 
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
+    if (!user.password) {
+      throw new BadRequestException(
+        'Esta conta usa login com Google e não possui senha local para alterar',
+      );
+    }
+
     const passwordMatch = await bcrypt.compare(
       dto.currentPassword,
       user.password,

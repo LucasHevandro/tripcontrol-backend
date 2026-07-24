@@ -14,12 +14,14 @@ describe('ParticipantsService', () => {
         findUnique: jest.fn(),
         update: jest.fn(),
         count: jest.fn(),
+        delete: jest.fn(),
       },
       expense: {
         findMany: jest.fn(),
       },
       expenseSplit: {
         findMany: jest.fn(),
+        count: jest.fn(),
       },
       payment: {
         findMany: jest.fn(),
@@ -27,6 +29,7 @@ describe('ParticipantsService', () => {
     };
     const tripsService = {
       assertParticipant: jest.fn().mockResolvedValue({ id: 'participant-a' }),
+      assertOrganizer: jest.fn().mockResolvedValue({ id: 'participant-a' }),
     };
     // Serviço real de cálculo de saldos, rodando sobre o mesmo prisma mockado —
     // exercita a lógica real de agregação, não apenas um stub.
@@ -93,6 +96,39 @@ describe('ParticipantsService', () => {
     expect(prisma.expense.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.expenseSplit.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.payment.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  describe('remove', () => {
+    it('bloqueia remover participante que já tem despesas registradas', async () => {
+      const { prisma, service } = createService();
+      prisma.tripParticipant.findUnique.mockResolvedValue({
+        id: 'participant-b',
+      });
+      prisma.expenseSplit.count.mockResolvedValue(2);
+
+      await expect(
+        service.remove('user-a', 'trip-1', 'user-b'),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prisma.tripParticipant.delete).not.toHaveBeenCalled();
+    });
+
+    it('remove normalmente um participante sem despesas', async () => {
+      const { prisma, service } = createService();
+      prisma.tripParticipant.findUnique.mockResolvedValue({
+        id: 'participant-b',
+      });
+      prisma.expenseSplit.count.mockResolvedValue(0);
+      prisma.tripParticipant.delete.mockResolvedValue(undefined);
+
+      await expect(
+        service.remove('user-a', 'trip-1', 'user-b'),
+      ).resolves.toEqual({ message: 'Participante removido com sucesso' });
+
+      expect(prisma.tripParticipant.delete).toHaveBeenCalledWith({
+        where: { tripId_userId: { tripId: 'trip-1', userId: 'user-b' } },
+      });
+    });
   });
 
   describe('setSponsor', () => {

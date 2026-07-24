@@ -291,6 +291,15 @@ export class ParticipantsService {
     if (!participant)
       throw new NotFoundException('Participante não encontrado');
 
+    const expenseSplitCount = await this.prisma.expenseSplit.count({
+      where: { participantId: participant.id },
+    });
+    if (expenseSplitCount > 0) {
+      throw new BadRequestException(
+        'Este participante já tem despesas registradas nesta viagem e não pode ser removido',
+      );
+    }
+
     await this.prisma.tripParticipant.delete({
       where: { tripId_userId: { tripId, userId: participantId } },
     });

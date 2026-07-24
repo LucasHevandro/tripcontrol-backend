@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TripsService } from '../trips/trips.service';
@@ -69,6 +70,10 @@ export class ReservationsService {
   async create(userId: string, tripId: string, dto: CreateReservationDto) {
     await this.tripsService.assertParticipant(userId, tripId);
 
+    if (dto.paidById) {
+      await this.assertParticipantOfTrip(tripId, dto.paidById);
+    }
+
     const reservation = await this.prisma.reservation.create({
       data: {
         tripId,
@@ -97,6 +102,10 @@ export class ReservationsService {
     await this.tripsService.assertParticipant(userId, tripId);
     await this.assertReservationBelongsToTrip(reservationId, tripId);
 
+    if (dto.paidById) {
+      await this.assertParticipantOfTrip(tripId, dto.paidById);
+    }
+
     const reservation = await this.prisma.reservation.update({
       where: { id: reservationId },
       data: {
@@ -119,6 +128,15 @@ export class ReservationsService {
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  private async assertParticipantOfTrip(tripId: string, userId: string) {
+    const participant = await this.prisma.tripParticipant.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+    });
+    if (!participant) {
+      throw new BadRequestException('Pagador não é participante da viagem');
+    }
+  }
 
   private async assertReservationBelongsToTrip(
     reservationId: string,
