@@ -126,13 +126,11 @@ export class ExpensesService {
     const perPersonAverage =
       participantCount > 0 ? sharedTotal / participantCount : 0;
 
-    // Maior despesa
     const largest = expenses.reduce(
       (max, e) => (Number(e.amount) > Number(max?.amount ?? 0) ? e : max),
       expenses[0],
     );
 
-    // Gastos por categoria
     const categoryMap = new Map<string, number>();
     expenses.forEach((e) => {
       const current = categoryMap.get(e.category) ?? 0;

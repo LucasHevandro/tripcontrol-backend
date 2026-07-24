@@ -10,10 +10,8 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  // Segurança
   app.use(helmet());
 
-  // CORS — aceita requisições do frontend
   app.enableCors({
     origin: configService.get<string>('FRONTEND_URL', 'http://localhost:3000'),
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
@@ -21,10 +19,8 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Prefixo global — todos os endpoints ficam em /api/v1/...
   app.setGlobalPrefix('api/v1');
 
-  // Validação global — rejeita automaticamente payloads inválidos
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,        // remove campos não declarados no DTO
@@ -36,7 +32,6 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger
   const config = new DocumentBuilder()
     .setTitle('TripControl API')
     .setDescription('API do sistema de gerenciamento de viagens em grupo')

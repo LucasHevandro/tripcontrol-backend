@@ -42,7 +42,6 @@ export class RoadmapService {
       where: { tripId },
     });
 
-    // Agrupa atividades por dia
     const days = this.buildDays(
       trip.startDate,
       trip.endDate,
@@ -50,7 +49,6 @@ export class RoadmapService {
       participantCount,
     );
 
-    // Reservas ativas
     const reservations = await this.prisma.reservation.findMany({
       where: { tripId, status: 'CONFIRMED' },
       select: {

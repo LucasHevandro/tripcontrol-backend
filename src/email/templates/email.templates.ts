@@ -1,8 +1,4 @@
-/**
- * Templates de e-mail em HTML.
- * Mantidos separados do serviço para facilitar manutenção e leitura.
- * Estilo inline (obrigatório em e-mail — clientes ignoram <style> externo).
- */
+/** Estilo inline obrigatório: clientes de e-mail ignoram <style> externo. */
 
 const BRAND = '#1f9d6f';
 const TEXT = '#171717';

@@ -139,7 +139,6 @@ export class PaymentsController {
     return this.paymentsService.createPayment(tripId, user.id, dto);
   }
 
-  // ← novo
   @Get()
   async findAll(
     @Param('tripId') tripId: string,
@@ -148,7 +147,6 @@ export class PaymentsController {
     return this.paymentsService.findAllPayments(tripId, user.id);
   }
 
-  // ← novo
   @Delete(':paymentId')
   @HttpCode(204)
   async remove(

@@ -176,7 +176,6 @@ export class TripsService {
 
     if (!trip) throw new NotFoundException('Viagem não encontrada');
 
-    // Totais financeiros
     const allExpenses = await this.prisma.expense.findMany({
       where: { tripId },
       select: { amount: true },
@@ -187,22 +186,18 @@ export class TripsService {
       0,
     );
 
-    // Atividades concluídas
     const completedActivityCount = await this.prisma.roadmapActivity.count({
       where: { tripId, status: 'COMPLETED' },
     });
 
-    // Reservas confirmadas
     const allReservationsConfirmed =
       (await this.prisma.reservation.count({
         where: { tripId, status: { not: 'CONFIRMED' } },
       })) === 0;
 
-    // Saldo de cada participante
     const participantsWithBalance =
       await this.calculateParticipantBalances(tripId);
 
-    // Status de nova viagem
     const newTripStatus = {
       hasInvitedParticipants: trip.participants.length > 1,
       hasRoadmapActivities: trip._count.activities > 0,

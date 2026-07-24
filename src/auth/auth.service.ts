@@ -99,7 +99,6 @@ export class AuthService {
   // ─── Login com Google ─────────────────────────────────────────────────────
 
   async googleLogin(credential: string) {
-    // 1. Valida o ID token com o Google e extrai os dados verificados
     const payload = await this.verifyGoogleToken(credential);
 
     const { email, name, picture, sub: googleId } = payload;
@@ -110,7 +109,6 @@ export class AuthService {
       );
     }
 
-    // 2. Procura usuário pelo googleId ou pelo e-mail
     let user = await this.prisma.user.findFirst({
       where: {
         OR: [{ googleId }, { email }],
@@ -124,13 +122,11 @@ export class AuthService {
           where: { id: user.id },
           data: {
             googleId,
-            // preenche avatar do Google se o usuário ainda não tiver um
             avatarUrl: user.avatarUrl ?? picture ?? null,
           },
         });
       }
     } else {
-      // 3. Não existe → cria conta nova (sem senha)
       user = await this.prisma.user.create({
         data: {
           name: name ?? email.split('@')[0],
@@ -142,7 +138,6 @@ export class AuthService {
       });
     }
 
-    // 4. Gera o mesmo par de tokens do login normal
     const tokens = await this.generateTokens(user.id, user.email);
 
     return {
@@ -198,7 +193,6 @@ export class AuthService {
   // ─── Logout ───────────────────────────────────────────────────────────────
 
   async logout(userId: string) {
-    // Remove todos os refresh tokens do usuário
     await this.prisma.refreshToken.deleteMany({
       where: { userId },
     });

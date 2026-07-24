@@ -43,7 +43,6 @@ export class ReservationsService {
       orderBy: { createdAt: 'asc' },
     });
 
-    // Estatísticas do topo
     const confirmedCount = reservations.filter(
       (r) => r.status === ReservationStatus.CONFIRMED,
     ).length;
@@ -139,10 +138,7 @@ export class ReservationsService {
   private formatReservation(r: any) {
     const details = (r.details as Record<string, any>) ?? {};
 
-    // Monta a lista de detalhes específicos por categoria
     const detailLines = this.buildDetailLines(r.category, details);
-
-    // Determina a ação primária pelo status e categoria
     const primaryAction = this.buildPrimaryAction(r.id, r.status, r.category);
 
     return {

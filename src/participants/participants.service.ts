@@ -169,7 +169,6 @@ export class ParticipantsService {
           if (alreadyParticipant) return null;
         }
 
-        // Cria o convite
         const invite = await this.prisma.invite.create({
           data: { tripId, invitedBy: userId, email, expiresAt },
         });

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SplitType } from '../generated/prisma/enums';
 
-/** Dados minimos de cada participante para o cálculo */
 export interface ParticipantIdentity {
     /** TripParticipant.id — usado em splits e payments */
     id: string;
@@ -10,7 +9,6 @@ export interface ParticipantIdentity {
     userId: string;
 }
 
-/** Resultado do cálculo por participante */
 export interface ParticipantBalance {
     totalPaid: number;
     individualQuota: number;
