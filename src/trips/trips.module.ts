@@ -4,9 +4,9 @@ import { TripsService } from './trips.service';
 import { FinancesModule } from 'src/finances/finances.module';
 
 @Module({
-    imports: [FinancesModule],
-    controllers: [TripsController],
-    providers: [TripsService],
-    exports: [TripsService],
+  imports: [FinancesModule],
+  controllers: [TripsController],
+  providers: [TripsService],
+  exports: [TripsService],
 })
-export class TripsModule { }
+export class TripsModule {}

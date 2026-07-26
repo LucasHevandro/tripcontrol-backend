@@ -1,13 +1,10 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TripsService } from '../trips/trips.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
 import { ActivityStatus, CostType } from '../generated/prisma/enums';
+import type { RoadmapActivityModel } from '../generated/prisma/models';
 
 @Injectable()
 export class RoadmapService {
@@ -38,15 +35,23 @@ export class RoadmapService {
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
     });
 
-    // Agrupa atividades por dia
-    const days = this.buildDays(trip.startDate, trip.endDate, activities);
+    const participantCount = await this.prisma.tripParticipant.count({
+      where: { tripId },
+    });
 
-    // Reservas ativas
+    const days = this.buildDays(
+      trip.startDate,
+      trip.endDate,
+      activities,
+      participantCount,
+    );
+
     const reservations = await this.prisma.reservation.findMany({
       where: { tripId, status: 'CONFIRMED' },
       select: {
         id: true,
         title: true,
+        subtitle: true,
         category: true,
         status: true,
       },
@@ -67,7 +72,7 @@ export class RoadmapService {
       activeReservations: reservations.map((r) => ({
         id: r.id,
         title: r.title,
-        subtitle: '',
+        subtitle: r.subtitle ?? '',
         status: r.status.toLowerCase(),
         icon: this.mapReservationIcon(r.category),
       })),
@@ -166,7 +171,12 @@ export class RoadmapService {
     return activity;
   }
 
-  private buildDays(startDate: Date, endDate: Date, activities: any[]) {
+  private buildDays(
+    startDate: Date,
+    endDate: Date,
+    activities: RoadmapActivityModel[],
+    participantCount: number,
+  ) {
     const days: {
       date: string;
       label: string;
@@ -200,7 +210,7 @@ export class RoadmapService {
           month: 'long',
         }),
         activityCount: dayActivities.length,
-        participantCount: 0,
+        participantCount,
         activities: dayActivities.map((a) => this.formatActivity(a)),
       });
 
@@ -210,7 +220,7 @@ export class RoadmapService {
     return days;
   }
 
-  private formatActivity(a: any) {
+  private formatActivity(a: RoadmapActivityModel) {
     const costLabel = this.buildCostLabel(
       a.costType,
       a.costAmount ? Number(a.costAmount) : null,

@@ -69,13 +69,17 @@ describe('AuthService', () => {
     const expectedHash = createHash('sha256')
       .update('refresh-token')
       .digest('hex');
+    // expect.any(...) e mock.calls são tipados como `any` nas próprias
+    // definições do Jest — idiomático em teste, não um valor inseguro de verdade.
     expect(prisma.refreshToken.create).toHaveBeenCalledWith({
       data: {
         token: expectedHash,
         userId: 'user-1',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         expiresAt: expect.any(Date),
       },
     });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(prisma.refreshToken.create.mock.calls[0][0].data.token).not.toBe(
       'refresh-token',
     );

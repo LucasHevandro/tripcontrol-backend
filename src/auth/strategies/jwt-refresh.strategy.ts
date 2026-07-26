@@ -4,6 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
+import type { Request } from 'express';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -23,7 +24,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
   }
 
   async validate(req: Request, payload: { sub: string }) {
-    const authHeader = (req.headers as any)['authorization'];
+    const authHeader = req.headers.authorization;
     const refreshToken = authHeader?.replace('Bearer ', '');
     const refreshTokenHash = createHash('sha256')
       .update(refreshToken ?? '')

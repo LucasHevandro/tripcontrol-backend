@@ -11,8 +11,8 @@ import {
   HttpStatus,
   UseInterceptors,
   UploadedFile,
-  Post as HttpPost,
   Query as QueryParam,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -37,7 +37,7 @@ import { CreatePaymentDto } from './dto/create-payment-dto';
 @UseGuards(JwtGuard)
 @Controller('trips/:tripId/expenses')
 export class ExpensesController {
-  constructor(private expensesService: ExpensesService) { }
+  constructor(private expensesService: ExpensesService) {}
 
   @Get()
   @ApiOperation({ summary: 'Listar despesas da viagem' })
@@ -112,6 +112,18 @@ export class ExpensesController {
           cb(null, `receipt-${unique}${extname(file.originalname)}`);
         },
       }),
+      fileFilter: (_req, file, cb) => {
+        const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
+        if (!allowed.includes(file.mimetype)) {
+          return cb(
+            new BadRequestException(
+              'Formato não suportado. Use JPG, PNG ou PDF',
+            ),
+            false,
+          );
+        }
+        cb(null, true);
+      },
       limits: { fileSize: 5 * 1024 * 1024 },
     }),
   )
@@ -128,7 +140,7 @@ export class ExpensesController {
 @Controller('trips/:tripId/payments')
 @UseGuards(JwtGuard)
 export class PaymentsController {
-  constructor(private readonly paymentsService: ExpensesService) { }
+  constructor(private readonly paymentsService: ExpensesService) {}
 
   @Post()
   async create(
@@ -139,7 +151,6 @@ export class PaymentsController {
     return this.paymentsService.createPayment(tripId, user.id, dto);
   }
 
-  // ← novo
   @Get()
   async findAll(
     @Param('tripId') tripId: string,
@@ -148,7 +159,6 @@ export class PaymentsController {
     return this.paymentsService.findAllPayments(tripId, user.id);
   }
 
-  // ← novo
   @Delete(':paymentId')
   @HttpCode(204)
   async remove(

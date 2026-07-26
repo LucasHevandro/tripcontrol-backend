@@ -5,9 +5,11 @@ import {
   IsOptional,
   IsEnum,
   IsArray,
+  ValidateNested,
   Min,
   MinLength,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SplitType } from '../../generated/prisma/enums';
 
@@ -57,6 +59,8 @@ export class CreateExpenseDto {
   })
   @IsOptional()
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SplitParticipantDto)
   splitParticipants?: SplitParticipantDto[];
 
   @ApiPropertyOptional({ example: 'Mesa para 6 pessoas' })

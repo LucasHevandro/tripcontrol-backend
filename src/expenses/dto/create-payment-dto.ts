@@ -1,17 +1,17 @@
 import { IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class CreatePaymentDto {
-    @IsUUID()
-    fromUserId: string;
+  @IsUUID()
+  fromUserId: string;
 
-    @IsUUID()
-    toUserId: string;
+  @IsUUID()
+  toUserId: string;
 
-    @IsNumber()
-    @Min(0.01)
-    amount: number;
+  @IsNumber()
+  @Min(0.01)
+  amount: number;
 
-    @IsOptional()
-    @IsString()
-    notes?: string;
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }

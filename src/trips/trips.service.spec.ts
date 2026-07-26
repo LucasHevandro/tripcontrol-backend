@@ -12,7 +12,8 @@ describe('TripsService', () => {
         create: jest.fn().mockResolvedValue({ id: 'trip-1' }),
       },
     };
-    const service = new TripsService(prisma as any);
+    const balanceCalc = {};
+    const service = new TripsService(prisma as any, balanceCalc as any);
 
     await expect(
       service.create('user-1', {
@@ -23,7 +24,10 @@ describe('TripsService', () => {
       }),
     ).resolves.toEqual({ id: 'trip-1' });
 
+    // expect.objectContaining(...) é tipado como `any` na própria definição do
+    // Jest — idiomático em teste, não um valor inseguro de verdade.
     expect(prisma.trip.create).toHaveBeenCalledWith({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: expect.objectContaining({
         name: 'Serra Gaúcha',
         destination: 'Rio Grande do Sul',

@@ -11,6 +11,13 @@ import { InviteByEmailDto } from './dto/invite-by-email.dto';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
 import { BalanceCalculatorService } from '../finances/balance.service';
+import { TripStatus } from '../generated/prisma/enums';
+
+const TRIP_STATUS_LABEL: Record<TripStatus, string> = {
+  PLANNING: 'Planejando',
+  ONGOING: 'Ativo',
+  COMPLETED: 'Concluída',
+};
 
 type ParticipantForBalance = {
   id: string;
@@ -34,7 +41,7 @@ export class ParticipantsService {
     private config: ConfigService,
     private email: EmailService,
     private readonly balanceCalc: BalanceCalculatorService,
-  ) { }
+  ) {}
 
   /** Monta o link de convite usando a URL do frontend configurada por ambiente */
   private buildInviteLink(inviteToken: string | undefined): string {
@@ -52,7 +59,13 @@ export class ParticipantsService {
 
     const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
-      select: { name: true, startDate: true, endDate: true, budget: true },
+      select: {
+        name: true,
+        startDate: true,
+        endDate: true,
+        budget: true,
+        status: true,
+      },
     });
 
     if (!trip) throw new NotFoundException('Viagem não encontrada');
@@ -80,16 +93,20 @@ export class ParticipantsService {
       participantsWithBalance,
     );
 
-    const tripData = await this.prisma.trip.findUnique({
-      where: { id: tripId },
-      select: { inviteToken: true },
-    });
+    const [tripData, pendingInvitesCount] = await Promise.all([
+      this.prisma.trip.findUnique({
+        where: { id: tripId },
+        select: { inviteToken: true },
+      }),
+      this.prisma.invite.count({
+        where: { tripId, status: 'PENDING' },
+      }),
+    ]);
 
     return {
       tripName: trip.name,
       tripPeriod: this.formatPeriod(trip.startDate, trip.endDate),
       participantCount: participants.length,
-      maxParticipants: 10,
       organizerCount: participants.filter((p) => p.role === 'ORGANIZER').length,
       totalSpent: Math.round(totalSpent * 100) / 100,
       perPersonAverage:
@@ -101,8 +118,11 @@ export class ParticipantsService {
         Math.round(
           pendingSettlements.reduce((sum, s) => sum + s.amount, 0) * 100,
         ) / 100,
-      groupStatusLabel: 'Ativo',
-      groupStatusSublabel: 'todos confirmados',
+      groupStatusLabel: TRIP_STATUS_LABEL[trip.status],
+      groupStatusSublabel:
+        pendingInvitesCount > 0
+          ? `${pendingInvitesCount} convite${pendingInvitesCount > 1 ? 's' : ''} pendente${pendingInvitesCount > 1 ? 's' : ''}`
+          : 'todos confirmados',
       inviteLink: this.buildInviteLink(tripData?.inviteToken),
       participants: participantsWithBalance,
       settlementSummary: pendingSettlements,
@@ -132,45 +152,57 @@ export class ParticipantsService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    const invites = await Promise.all(
-      dto.emails.map(async (email) => {
-        // Verifica se já existe participante com esse e-mail
-        const existingUser = await this.prisma.user.findUnique({
-          where: { email },
-        });
+    // Batch: descobre de uma vez quais e-mails já têm conta e já são participantes
+    const existingUsers = await this.prisma.user.findMany({
+      where: { email: { in: dto.emails } },
+      select: { id: true, email: true },
+    });
+    const userIdByEmail = new Map(existingUsers.map((u) => [u.email, u.id]));
 
-        if (existingUser) {
-          const alreadyParticipant =
-            await this.prisma.tripParticipant.findUnique({
-              where: {
-                tripId_userId: { tripId, userId: existingUser.id },
-              },
-            });
-          if (alreadyParticipant) return null;
-        }
+    const existingUserIds = existingUsers.map((u) => u.id);
+    const existingParticipants = existingUserIds.length
+      ? await this.prisma.tripParticipant.findMany({
+          where: { tripId, userId: { in: existingUserIds } },
+          select: { userId: true },
+        })
+      : [];
+    const alreadyParticipantUserIds = new Set(
+      existingParticipants.map((p) => p.userId),
+    );
 
-        // Cria o convite
-        const invite = await this.prisma.invite.create({
-          data: { tripId, invitedBy: userId, email, expiresAt },
-        });
+    const emailsToInvite = dto.emails.filter((email) => {
+      const uid = userIdByEmail.get(email);
+      return !uid || !alreadyParticipantUserIds.has(uid);
+    });
 
-        // Envia o e-mail de convite (não bloqueia em caso de falha)
-        await this.email.sendInvite({
-          to: email,
+    if (emailsToInvite.length === 0) {
+      return { message: '0 convite(s) enviado(s) com sucesso', invites: [] };
+    }
+
+    const createdInvites = await this.prisma.invite.createManyAndReturn({
+      data: emailsToInvite.map((email) => ({
+        tripId,
+        invitedBy: userId,
+        email,
+        expiresAt,
+      })),
+    });
+
+    // Envia os e-mails de convite (não bloqueia em caso de falha individual)
+    await Promise.all(
+      createdInvites.map((invite) =>
+        this.email.sendInvite({
+          to: invite.email!,
           tripName,
           inviterName,
           inviteToken: invite.token,
-        });
-
-        return invite;
-      }),
+        }),
+      ),
     );
 
-    const sent = invites.filter(Boolean).length;
-
     return {
-      message: `${sent} convite(s) enviado(s) com sucesso`,
-      invites: invites.filter(Boolean),
+      message: `${createdInvites.length} convite(s) enviado(s) com sucesso`,
+      invites: createdInvites,
     };
   }
 
@@ -271,6 +303,15 @@ export class ParticipantsService {
 
     if (!participant)
       throw new NotFoundException('Participante não encontrado');
+
+    const expenseSplitCount = await this.prisma.expenseSplit.count({
+      where: { participantId: participant.id },
+    });
+    if (expenseSplitCount > 0) {
+      throw new BadRequestException(
+        'Este participante já tem despesas registradas nesta viagem e não pode ser removido',
+      );
+    }
 
     await this.prisma.tripParticipant.delete({
       where: { tripId_userId: { tripId, userId: participantId } },
@@ -463,9 +504,7 @@ export class ParticipantsService {
       tripId,
       participants.map((p) => ({ id: p.id, userId: p.userId })),
     );
-    const byTripParticipantId = new Map(
-      participants.map((p) => [p.id, p]),
-    );
+    const byTripParticipantId = new Map(participants.map((p) => [p.id, p]));
 
     return participants.map((participant) => {
       const b = balances.get(participant.id)!;
@@ -563,9 +602,12 @@ export class ParticipantsService {
   }
 
   private formatPeriod(start: Date, end: Date): string {
+    const startDay = start.getDate();
+    const endDay = end.getDate();
     const month = end
       .toLocaleDateString('pt-BR', { month: 'short' })
       .replace('.', '');
-    return `${start.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')} ${start.getFullYear()}`;
+    const year = end.getFullYear();
+    return `${startDay}–${endDay} ${month} ${year}`;
   }
 }

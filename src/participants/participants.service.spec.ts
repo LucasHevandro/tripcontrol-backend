@@ -14,12 +14,14 @@ describe('ParticipantsService', () => {
         findUnique: jest.fn(),
         update: jest.fn(),
         count: jest.fn(),
+        delete: jest.fn(),
       },
       expense: {
         findMany: jest.fn(),
       },
       expenseSplit: {
         findMany: jest.fn(),
+        count: jest.fn(),
       },
       payment: {
         findMany: jest.fn(),
@@ -27,6 +29,7 @@ describe('ParticipantsService', () => {
     };
     const tripsService = {
       assertParticipant: jest.fn().mockResolvedValue({ id: 'participant-a' }),
+      assertOrganizer: jest.fn().mockResolvedValue({ id: 'participant-a' }),
     };
     // Serviço real de cálculo de saldos, rodando sobre o mesmo prisma mockado —
     // exercita a lógica real de agregação, não apenas um stub.
@@ -41,7 +44,7 @@ describe('ParticipantsService', () => {
         tripsService as any,
         {} as any,
         {} as any,
-        balanceCalc as any,
+        balanceCalc,
       ),
     };
   };
@@ -95,6 +98,39 @@ describe('ParticipantsService', () => {
     expect(prisma.payment.findMany).toHaveBeenCalledTimes(1);
   });
 
+  describe('remove', () => {
+    it('bloqueia remover participante que já tem despesas registradas', async () => {
+      const { prisma, service } = createService();
+      prisma.tripParticipant.findUnique.mockResolvedValue({
+        id: 'participant-b',
+      });
+      prisma.expenseSplit.count.mockResolvedValue(2);
+
+      await expect(
+        service.remove('user-a', 'trip-1', 'user-b'),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prisma.tripParticipant.delete).not.toHaveBeenCalled();
+    });
+
+    it('remove normalmente um participante sem despesas', async () => {
+      const { prisma, service } = createService();
+      prisma.tripParticipant.findUnique.mockResolvedValue({
+        id: 'participant-b',
+      });
+      prisma.expenseSplit.count.mockResolvedValue(0);
+      prisma.tripParticipant.delete.mockResolvedValue(undefined);
+
+      await expect(
+        service.remove('user-a', 'trip-1', 'user-b'),
+      ).resolves.toEqual({ message: 'Participante removido com sucesso' });
+
+      expect(prisma.tripParticipant.delete).toHaveBeenCalledWith({
+        where: { tripId_userId: { tripId: 'trip-1', userId: 'user-b' } },
+      });
+    });
+  });
+
   describe('setSponsor', () => {
     const TRIP = 'trip-1';
     const OTHER_TRIP = 'trip-2';
@@ -102,26 +138,64 @@ describe('ParticipantsService', () => {
     // Ana: organizadora, Bruno: membro comum, Bruno-esposa: dependente de Bruno,
     // Carlos: já patrocina alguém em outra viagem (para o teste de trip cruzado).
     const baseRows = [
-      { id: 'p-ana', tripId: TRIP, userId: 'user-ana', role: 'ORGANIZER', sponsorId: null },
-      { id: 'p-bruno', tripId: TRIP, userId: 'user-bruno', role: 'MEMBER', sponsorId: null },
-      { id: 'p-bruno-esposa', tripId: TRIP, userId: 'user-bruno-esposa', role: 'MEMBER', sponsorId: 'p-bruno' },
-      { id: 'p-carlos', tripId: TRIP, userId: 'user-carlos', role: 'MEMBER', sponsorId: null },
-      { id: 'p-outro', tripId: OTHER_TRIP, userId: 'user-outro', role: 'MEMBER', sponsorId: null },
+      {
+        id: 'p-ana',
+        tripId: TRIP,
+        userId: 'user-ana',
+        role: 'ORGANIZER',
+        sponsorId: null,
+      },
+      {
+        id: 'p-bruno',
+        tripId: TRIP,
+        userId: 'user-bruno',
+        role: 'MEMBER',
+        sponsorId: null,
+      },
+      {
+        id: 'p-bruno-esposa',
+        tripId: TRIP,
+        userId: 'user-bruno-esposa',
+        role: 'MEMBER',
+        sponsorId: 'p-bruno',
+      },
+      {
+        id: 'p-carlos',
+        tripId: TRIP,
+        userId: 'user-carlos',
+        role: 'MEMBER',
+        sponsorId: null,
+      },
+      {
+        id: 'p-outro',
+        tripId: OTHER_TRIP,
+        userId: 'user-outro',
+        role: 'MEMBER',
+        sponsorId: null,
+      },
     ];
 
-    const mockRows = (prisma: any, rows = baseRows) => {
+    const mockRows = (
+      prisma: ReturnType<typeof createService>['prisma'],
+      rows = baseRows,
+    ) => {
       prisma.tripParticipant.findUnique.mockImplementation(
-        ({ where: { tripId_userId } }: any) =>
+        (args: {
+          where: { tripId_userId: { tripId: string; userId: string } };
+        }) =>
           Promise.resolve(
             rows.find(
               (r) =>
-                r.tripId === tripId_userId.tripId &&
-                r.userId === tripId_userId.userId,
+                r.tripId === args.where.tripId_userId.tripId &&
+                r.userId === args.where.tripId_userId.userId,
             ) ?? null,
           ),
       );
-      prisma.tripParticipant.count.mockImplementation(({ where }: any) =>
-        Promise.resolve(rows.filter((r) => r.sponsorId === where.sponsorId).length),
+      prisma.tripParticipant.count.mockImplementation(
+        (args: { where: { sponsorId: string } }) =>
+          Promise.resolve(
+            rows.filter((r) => r.sponsorId === args.where.sponsorId).length,
+          ),
       );
       prisma.tripParticipant.update.mockResolvedValue(undefined);
     };

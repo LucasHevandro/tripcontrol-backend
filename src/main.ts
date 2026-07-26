@@ -1,19 +1,21 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { ConfigService } from '@nestjs/config';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   const configService = app.get(ConfigService);
 
-  // Segurança
   app.use(helmet());
 
-  // CORS — aceita requisições do frontend
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads' });
+
   app.enableCors({
     origin: configService.get<string>('FRONTEND_URL', 'http://localhost:3000'),
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
@@ -21,22 +23,19 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Prefixo global — todos os endpoints ficam em /api/v1/...
   app.setGlobalPrefix('api/v1');
 
-  // Validação global — rejeita automaticamente payloads inválidos
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,        // remove campos não declarados no DTO
+      whitelist: true, // remove campos não declarados no DTO
       forbidNonWhitelisted: true, // retorna erro se vier campo extra
-      transform: true,        // converte tipos automaticamente (string → number, etc.)
+      transform: true, // converte tipos automaticamente (string → number, etc.)
       transformOptions: {
         enableImplicitConversion: true,
       },
     }),
   );
 
-  // Swagger
   const config = new DocumentBuilder()
     .setTitle('TripControl API')
     .setDescription('API do sistema de gerenciamento de viagens em grupo')
@@ -54,4 +53,4 @@ async function bootstrap() {
   console.log(`📚 Swagger disponível em http://localhost:${port}/api/docs`);
 }
 
-bootstrap();
+void bootstrap();

@@ -4,9 +4,9 @@ import { RoadmapService } from './roadmap.service';
 import { TripsModule } from '../trips/trips.module';
 
 @Module({
-    imports: [TripsModule],
-    controllers: [RoadmapController],
-    providers: [RoadmapService],
-    exports: [RoadmapService],
+  imports: [TripsModule],
+  controllers: [RoadmapController],
+  providers: [RoadmapService],
+  exports: [RoadmapService],
 })
-export class RoadmapModule { }
+export class RoadmapModule {}
