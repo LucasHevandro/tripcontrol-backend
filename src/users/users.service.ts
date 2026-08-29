@@ -16,6 +16,7 @@ import {
   type FileStorage,
 } from '../storage/file-storage.interface';
 import { UploadValidationService } from '../storage/upload-validation.service';
+import { ImageProcessingService } from '../storage/image-processing.service';
 
 const USER_SELECT = {
   id: true,
@@ -37,6 +38,7 @@ export class UsersService {
   constructor(
     private prisma: PrismaService,
     private uploadValidation: UploadValidationService,
+    private imageProcessing: ImageProcessingService,
     @Inject(FILE_STORAGE) private storage: FileStorage,
   ) { }
 
@@ -52,7 +54,6 @@ export class UsersService {
   }
 
   // ─── Atualizar dados pessoais ─────────────────────────────────────────────
-
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     if (dto.email) {
       const existing = await this.prisma.user.findFirst({
@@ -69,7 +70,6 @@ export class UsersService {
   }
 
   // ─── Trocar senha ─────────────────────────────────────────────────────────
-
   async updatePassword(userId: string, dto: UpdatePasswordDto) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -113,9 +113,11 @@ export class UsersService {
   }
 
   // ─── Upload de avatar ─────────────────────────────────────────────────────
-
   async updateAvatar(userId: string, file: Express.Multer.File) {
     const upload = this.uploadValidation.validate(file, 'avatar');
+
+    const image = await this.imageProcessing.processAvatar(upload.buffer);
+    const key = upload.key.replace(/\.\w+$/, `.${image.ext}`);
 
     const current = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -125,9 +127,9 @@ export class UsersService {
 
     const stored = await this.storage.save(
       'avatars',
-      upload.key,
-      upload.buffer,
-      upload.mime,
+      key,
+      image.buffer,
+      image.mime,
     );
 
     const user = await this.prisma.user.update({
@@ -136,13 +138,13 @@ export class UsersService {
       select: USER_SELECT,
     });
 
+    // Remove o avatar anterior (ignora URLs externas, ex.: foto do Google)
     await this.storage.deleteByUrl(current.avatarUrl);
 
     return user;
   }
 
   // ─── Atualizar preferências ───────────────────────────────────────────────
-
   async updatePreferences(userId: string, dto: UpdatePreferencesDto) {
     return this.prisma.user.update({
       where: { id: userId },
