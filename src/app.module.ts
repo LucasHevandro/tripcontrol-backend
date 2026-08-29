@@ -12,6 +12,7 @@ import { ParticipantsModule } from './participants/participants.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { RoadmapModule } from './roadmap/roadmap.module';
 import { ReservationsModule } from './reservations/reservations.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ReservationsModule } from './reservations/reservations.module';
     ExpensesModule,
     RoadmapModule,
     ReservationsModule,
+    StorageModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

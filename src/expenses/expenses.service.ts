@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Inject,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
@@ -12,6 +13,11 @@ import { SplitType } from '../generated/prisma/enums';
 import { CreatePaymentDto } from './dto/create-payment-dto';
 import { buildExpenseSplits } from './expense-splits.util';
 import { BalanceCalculatorService } from '../finances/balance.service';
+import {
+  FILE_STORAGE,
+  type FileStorage,
+} from '../storage/file-storage.interface';
+import { UploadValidationService } from '../storage/upload-validation.service';
 
 @Injectable()
 export class ExpensesService {
@@ -19,7 +25,9 @@ export class ExpensesService {
     private prisma: PrismaService,
     private tripsService: TripsService,
     private balanceCalc: BalanceCalculatorService,
-  ) {}
+    private uploadValidation: UploadValidationService,
+    @Inject(FILE_STORAGE) private storage: FileStorage,
+  ) { }
 
   // ─── Listar despesas ──────────────────────────────────────────────────────
   async findAll(
@@ -271,9 +279,9 @@ export class ExpensesService {
     const participants =
       shouldRebuildSplits || paidById
         ? await this.prisma.tripParticipant.findMany({
-            where: { tripId },
-            select: { id: true, userId: true, sponsorId: true },
-          })
+          where: { tripId },
+          select: { id: true, userId: true, sponsorId: true },
+        })
         : [];
 
     if (
@@ -285,11 +293,11 @@ export class ExpensesService {
 
     const splits = shouldRebuildSplits
       ? buildExpenseSplits({
-          amount: nextAmount,
-          splitType: nextSplitType,
-          splitParticipants,
-          tripParticipants: participants,
-        })
+        amount: nextAmount,
+        splitType: nextSplitType,
+        splitParticipants,
+        tripParticipants: participants,
+      })
       : undefined;
 
     return this.prisma.$transaction(async (tx) => {
@@ -316,17 +324,17 @@ export class ExpensesService {
   }
 
   // ─── Deletar despesa ──────────────────────────────────────────────────────
-
   async remove(userId: string, tripId: string, expenseId: string) {
     await this.tripsService.assertParticipant(userId, tripId);
-    await this.assertExpenseOwner(userId, expenseId, tripId);
+    const expense = await this.assertExpenseOwner(userId, expenseId, tripId);
 
     await this.prisma.expense.delete({ where: { id: expenseId } });
+    await this.storage.deleteByUrl(expense.receiptUrl);
+
     return { message: 'Despesa removida com sucesso' };
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
-
   private async assertExpenseOwner(
     userId: string,
     expenseId: string,
@@ -359,24 +367,25 @@ export class ExpensesService {
     expenseId: string,
     file: Express.Multer.File,
   ) {
-    if (!file) throw new BadRequestException('Nenhum arquivo enviado');
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    if (!allowedTypes.includes(file.mimetype)) {
-      throw new BadRequestException(
-        'Formato não suportado. Use JPG, PNG ou PDF',
-      );
-    }
+    const current = await this.assertExpenseOwner(userId, expenseId, tripId);
+    const upload = this.uploadValidation.validate(file, 'receipt');
 
-    await this.assertExpenseOwner(userId, expenseId, tripId);
-
-    const receiptUrl = `/uploads/receipts/${file.filename}`;
+    const stored = await this.storage.save(
+      'receipts',
+      upload.key,
+      upload.buffer,
+      upload.mime,
+    );
 
     const expense = await this.prisma.expense.update({
       where: { id: expenseId },
-      data: { receiptUrl },
+      data: { receiptUrl: stored.url },
       select: { id: true, receiptUrl: true },
     });
+
+    // Remove o comprovante anterior, se houver
+    await this.storage.deleteByUrl(current.receiptUrl);
 
     return { id: expense.id, receiptUrl: expense.receiptUrl };
   }

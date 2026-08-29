@@ -12,7 +12,6 @@ import {
   UseInterceptors,
   UploadedFile,
   Query as QueryParam,
-  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -28,8 +27,7 @@ import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { JwtGuard } from '../auth/guards/jwt.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 import { CreatePaymentDto } from './dto/create-payment-dto';
 
 @ApiTags('Expenses')
@@ -37,7 +35,7 @@ import { CreatePaymentDto } from './dto/create-payment-dto';
 @UseGuards(JwtGuard)
 @Controller('trips/:tripId/expenses')
 export class ExpensesController {
-  constructor(private expensesService: ExpensesService) {}
+  constructor(private expensesService: ExpensesService) { }
 
   @Get()
   @ApiOperation({ summary: 'Listar despesas da viagem' })
@@ -105,26 +103,8 @@ export class ExpensesController {
   })
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/receipts',
-        filename: (_, file, cb) => {
-          const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `receipt-${unique}${extname(file.originalname)}`);
-        },
-      }),
-      fileFilter: (_req, file, cb) => {
-        const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
-        if (!allowed.includes(file.mimetype)) {
-          return cb(
-            new BadRequestException(
-              'Formato não suportado. Use JPG, PNG ou PDF',
-            ),
-            false,
-          );
-        }
-        cb(null, true);
-      },
-      limits: { fileSize: 5 * 1024 * 1024 },
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024, files: 1 },
     }),
   )
   uploadReceipt(
@@ -140,7 +120,7 @@ export class ExpensesController {
 @Controller('trips/:tripId/payments')
 @UseGuards(JwtGuard)
 export class PaymentsController {
-  constructor(private readonly paymentsService: ExpensesService) {}
+  constructor(private readonly paymentsService: ExpensesService) { }
 
   @Post()
   async create(

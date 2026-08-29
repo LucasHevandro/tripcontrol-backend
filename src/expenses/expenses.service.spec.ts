@@ -1,7 +1,7 @@
 import { ForbiddenException } from '@nestjs/common';
 
 jest.mock('../prisma/prisma.service', () => ({
-  PrismaService: class PrismaService {},
+  PrismaService: class PrismaService { },
 }));
 
 import { ExpensesService } from './expenses.service';
@@ -18,6 +18,8 @@ describe('ExpensesService', () => {
     };
     const tripsService = {};
     const balanceCalc = {};
+    const uploadValidation = {};
+    const storage = {};
 
     return {
       prisma,
@@ -25,6 +27,8 @@ describe('ExpensesService', () => {
         prisma as any,
         tripsService as any,
         balanceCalc as any,
+        uploadValidation as any,
+        storage as any,
       ),
     };
   };
