@@ -20,7 +20,7 @@ import { ReservationsModule } from './reservations/reservations.module';
       envFilePath: '.env',
       validationSchema: envValidationSchema,
     }),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 20 }]),
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     PrismaModule,
     EmailModule,
     AuthModule,
@@ -33,4 +33,4 @@ import { ReservationsModule } from './reservations/reservations.module';
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
-export class AppModule {}
+export class AppModule { }

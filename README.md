@@ -230,7 +230,7 @@ A segurança não foi um detalhe de última hora — ela está presente em cada 
 - **Refresh tokens** são salvos como hash SHA-256 no banco, garantindo que mesmo com acesso ao banco, os tokens não possam ser reutilizados.
 - **Rotas privadas** são protegidas por JWT guard via Passport.
 - **DTOs** são validados globalmente com whitelist e bloqueio automático de campos desconhecidos — nada passa sem ser esperado.
-- **Rate limiting** (`@nestjs/throttler`) protege `/auth/login` e `/auth/register` contra força bruta (5 tentativas/minuto por IP), com um limite global mais permissivo (20/minuto) no restante da API.
+- **Rate limiting** (`@nestjs/throttler`) protege `/auth/login` e `/auth/register` contra força bruta (5 tentativas/minuto por IP), com um limite global mais permissivo (120/minuto) no restante da API.
 - **Helmet** está habilitado no bootstrap da aplicação, adicionando headers de segurança HTTP.
 
 ---
