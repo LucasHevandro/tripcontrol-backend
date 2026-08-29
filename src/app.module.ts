@@ -12,6 +12,7 @@ import { ParticipantsModule } from './participants/participants.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { RoadmapModule } from './roadmap/roadmap.module';
 import { ReservationsModule } from './reservations/reservations.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { ReservationsModule } from './reservations/reservations.module';
       envFilePath: '.env',
       validationSchema: envValidationSchema,
     }),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 20 }]),
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     PrismaModule,
     EmailModule,
     AuthModule,
@@ -30,7 +31,8 @@ import { ReservationsModule } from './reservations/reservations.module';
     ExpensesModule,
     RoadmapModule,
     ReservationsModule,
+    StorageModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
-export class AppModule {}
+export class AppModule { }

@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Inject,
   NotFoundException,
   ConflictException,
   UnauthorizedException,
@@ -10,6 +11,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
+import {
+  FILE_STORAGE,
+  type FileStorage,
+} from '../storage/file-storage.interface';
+import { UploadValidationService } from '../storage/upload-validation.service';
+import { ImageProcessingService } from '../storage/image-processing.service';
 
 const USER_SELECT = {
   id: true,
@@ -28,10 +35,14 @@ const USER_SELECT = {
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private uploadValidation: UploadValidationService,
+    private imageProcessing: ImageProcessingService,
+    @Inject(FILE_STORAGE) private storage: FileStorage,
+  ) { }
 
   // ─── Buscar perfil ────────────────────────────────────────────────────────
-
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -43,7 +54,6 @@ export class UsersService {
   }
 
   // ─── Atualizar dados pessoais ─────────────────────────────────────────────
-
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     if (dto.email) {
       const existing = await this.prisma.user.findFirst({
@@ -60,7 +70,6 @@ export class UsersService {
   }
 
   // ─── Trocar senha ─────────────────────────────────────────────────────────
-
   async updatePassword(userId: string, dto: UpdatePasswordDto) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -104,35 +113,38 @@ export class UsersService {
   }
 
   // ─── Upload de avatar ─────────────────────────────────────────────────────
-
   async updateAvatar(userId: string, file: Express.Multer.File) {
-    if (!file) throw new BadRequestException('Nenhum arquivo enviado');
+    const upload = this.uploadValidation.validate(file, 'avatar');
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.mimetype)) {
-      throw new BadRequestException(
-        'Formato não suportado. Use JPG, PNG ou WebP',
-      );
-    }
+    const image = await this.imageProcessing.processAvatar(upload.buffer);
+    const key = upload.key.replace(/\.\w+$/, `.${image.ext}`);
 
-    if (file.size > 5 * 1024 * 1024) {
-      throw new BadRequestException('Arquivo muito grande. Máximo 5MB');
-    }
-
-    // TODO: quando tiver storage configurado (S3, Cloudflare R2, etc.),
-    // fazer upload aqui e usar a URL retornada.
-    // Por ora salva o filename como placeholder.
-    const avatarUrl = `/uploads/avatars/${file.filename}`;
-
-    return this.prisma.user.update({
+    const current = await this.prisma.user.findUnique({
       where: { id: userId },
-      data: { avatarUrl },
+      select: { avatarUrl: true },
+    });
+    if (!current) throw new NotFoundException('Usuário não encontrado');
+
+    const stored = await this.storage.save(
+      'avatars',
+      key,
+      image.buffer,
+      image.mime,
+    );
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl: stored.url },
       select: USER_SELECT,
     });
+
+    // Remove o avatar anterior (ignora URLs externas, ex.: foto do Google)
+    await this.storage.deleteByUrl(current.avatarUrl);
+
+    return user;
   }
 
   // ─── Atualizar preferências ───────────────────────────────────────────────
-
   async updatePreferences(userId: string, dto: UpdatePreferencesDto) {
     return this.prisma.user.update({
       where: { id: userId },
