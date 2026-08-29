@@ -25,6 +25,10 @@ export class LocalDiskStorage implements FileStorage {
         return { key, url: `${this.publicPrefix}/${bucket}/${key}` };
     }
 
+    resolveReadUrl(url: string | null | undefined): Promise<string | null> {
+        return Promise.resolve(url ?? null);
+    }
+
     async deleteByUrl(url: string | null | undefined): Promise<void> {
         if (!url || !url.startsWith(`${this.publicPrefix}/`)) return;
 

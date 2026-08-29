@@ -72,8 +72,12 @@ export class ExpensesService {
       }),
     ]);
 
+    const receiptUrls = await Promise.all(
+      expenses.map((e) => this.storage.resolveReadUrl(e.receiptUrl)),
+    );
+
     return {
-      data: expenses.map((e) => ({
+      data: expenses.map((e, idx) => ({
         id: e.id,
         description: e.description,
         category: e.category,
@@ -86,7 +90,7 @@ export class ExpensesService {
         paidByName: e.paidBy.name,
         splitType: e.splitType,
         notes: e.notes,
-        receiptUrl: e.receiptUrl,
+        receiptUrl: receiptUrls[idx],
         splits: e.splits.map((s) => ({
           participantId: s.participantId,
           participantName: s.participant.user.name,
@@ -103,7 +107,6 @@ export class ExpensesService {
   }
 
   // ─── Resumo financeiro ────────────────────────────────────────────────────
-
   async getSummary(userId: string, tripId: string) {
     await this.tripsService.assertParticipant(userId, tripId);
 
@@ -257,7 +260,6 @@ export class ExpensesService {
   }
 
   // ─── Atualizar despesa ────────────────────────────────────────────────────
-
   async update(
     userId: string,
     tripId: string,
@@ -300,7 +302,7 @@ export class ExpensesService {
       })
       : undefined;
 
-    return this.prisma.$transaction(async (tx) => {
+    const updated = await this.prisma.$transaction(async (tx) => {
       if (splits) {
         await tx.expenseSplit.deleteMany({ where: { expenseId } });
       }
@@ -321,6 +323,11 @@ export class ExpensesService {
         },
       });
     });
+
+    return {
+      ...updated,
+      receiptUrl: await this.storage.resolveReadUrl(updated.receiptUrl),
+    };
   }
 
   // ─── Deletar despesa ──────────────────────────────────────────────────────
@@ -387,7 +394,10 @@ export class ExpensesService {
     // Remove o comprovante anterior, se houver
     await this.storage.deleteByUrl(current.receiptUrl);
 
-    return { id: expense.id, receiptUrl: expense.receiptUrl };
+    return {
+      id: expense.id,
+      receiptUrl: await this.storage.resolveReadUrl(expense.receiptUrl)
+    };
   }
 
   async createPayment(tripId: string, userId: string, dto: CreatePaymentDto) {

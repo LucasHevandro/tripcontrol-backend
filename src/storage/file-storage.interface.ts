@@ -12,7 +12,7 @@ export interface FileStorage {
         buffer: Buffer,
         contentType: string,
     ): Promise<StoredFile>;
-
+    resolveReadUrl(url: string | null | undefined): Promise<string | null>;
     deleteByUrl(url: string | null | undefined): Promise<void>;
 }
 

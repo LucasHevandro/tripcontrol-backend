@@ -21,11 +21,50 @@ export const envValidationSchema = Joi.object({
 
   FRONTEND_URL: Joi.string().uri().required(),
 
-  // OAuth Google — opcional (login com Google só funciona se configurado)
   GOOGLE_CLIENT_ID: Joi.string().allow('').optional(),
 
-  // E-mail (Resend) — opcional; se ausente, e-mails são apenas logados
   RESEND_API_KEY: Joi.string().allow('').optional(),
 
   EMAIL_FROM: Joi.string().allow('').optional(),
+
+  STORAGE_DRIVER: Joi.string().valid('local', 's3').default('local'),
+
+  S3_ENDPOINT: Joi.string().uri().when('STORAGE_DRIVER', {
+    is: 's3',
+    then: Joi.required(),
+    otherwise: Joi.optional().allow(''),
+  }),
+
+  S3_REGION: Joi.string().default('auto'),
+
+  S3_ACCESS_KEY_ID: Joi.string().when('STORAGE_DRIVER', {
+    is: 's3',
+    then: Joi.required(),
+    otherwise: Joi.optional().allow(''),
+  }),
+
+  S3_SECRET_ACCESS_KEY: Joi.string().when('STORAGE_DRIVER', {
+    is: 's3',
+    then: Joi.required(),
+    otherwise: Joi.optional().allow(''),
+  }),
+
+  S3_BUCKET_PUBLIC: Joi.string().when('STORAGE_DRIVER', {
+    is: 's3',
+    then: Joi.required(),
+    otherwise: Joi.optional().allow(''),
+  }),
+
+  S3_BUCKET_PRIVATE: Joi.string().when('STORAGE_DRIVER', {
+    is: 's3',
+    then: Joi.required(),
+    otherwise: Joi.optional().allow(''),
+  }),
+
+  S3_PUBLIC_URL: Joi.string().uri().when('STORAGE_DRIVER', {
+    is: 's3',
+    then: Joi.required(),
+    otherwise: Joi.optional().allow(''),
+  }),
+
 });
