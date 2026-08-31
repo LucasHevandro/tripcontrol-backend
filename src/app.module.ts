@@ -13,6 +13,7 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { RoadmapModule } from './roadmap/roadmap.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { StorageModule } from './storage/storage.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { StorageModule } from './storage/storage.module';
     RoadmapModule,
     ReservationsModule,
     StorageModule,
+    ReportsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
