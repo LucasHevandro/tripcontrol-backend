@@ -27,7 +27,7 @@ export class ExpensesService {
     private balanceCalc: BalanceCalculatorService,
     private uploadValidation: UploadValidationService,
     @Inject(FILE_STORAGE) private storage: FileStorage,
-  ) { }
+  ) {}
 
   // ─── Listar despesas ──────────────────────────────────────────────────────
   async findAll(
@@ -281,9 +281,9 @@ export class ExpensesService {
     const participants =
       shouldRebuildSplits || paidById
         ? await this.prisma.tripParticipant.findMany({
-          where: { tripId },
-          select: { id: true, userId: true, sponsorId: true },
-        })
+            where: { tripId },
+            select: { id: true, userId: true, sponsorId: true },
+          })
         : [];
 
     if (
@@ -295,11 +295,11 @@ export class ExpensesService {
 
     const splits = shouldRebuildSplits
       ? buildExpenseSplits({
-        amount: nextAmount,
-        splitType: nextSplitType,
-        splitParticipants,
-        tripParticipants: participants,
-      })
+          amount: nextAmount,
+          splitType: nextSplitType,
+          splitParticipants,
+          tripParticipants: participants,
+        })
       : undefined;
 
     const updated = await this.prisma.$transaction(async (tx) => {
@@ -374,7 +374,6 @@ export class ExpensesService {
     expenseId: string,
     file: Express.Multer.File,
   ) {
-
     const current = await this.assertExpenseOwner(userId, expenseId, tripId);
     const upload = this.uploadValidation.validate(file, 'receipt');
 
@@ -396,7 +395,7 @@ export class ExpensesService {
 
     return {
       id: expense.id,
-      receiptUrl: await this.storage.resolveReadUrl(expense.receiptUrl)
+      receiptUrl: await this.storage.resolveReadUrl(expense.receiptUrl),
     };
   }
 

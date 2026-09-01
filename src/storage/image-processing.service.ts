@@ -2,11 +2,11 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import sharp from 'sharp';
 
 export interface ProcessedImage {
-    buffer: Buffer;
-    mime: 'image/webp';
-    ext: 'webp';
-    width: number;
-    height: number;
+  buffer: Buffer;
+  mime: 'image/webp';
+  ext: 'webp';
+  width: number;
+  height: number;
 }
 
 const AVATAR_SIZE = 256;
@@ -21,25 +21,25 @@ const AVATAR_QUALITY = 80;
  */
 @Injectable()
 export class ImageProcessingService {
-    async processAvatar(input: Buffer): Promise<ProcessedImage> {
-        try {
-            const { data, info } = await sharp(input)
-                .rotate()
-                .resize(AVATAR_SIZE, AVATAR_SIZE, { fit: 'cover', position: 'centre' })
-                .webp({ quality: AVATAR_QUALITY })
-                .toBuffer({ resolveWithObject: true });
+  async processAvatar(input: Buffer): Promise<ProcessedImage> {
+    try {
+      const { data, info } = await sharp(input)
+        .rotate()
+        .resize(AVATAR_SIZE, AVATAR_SIZE, { fit: 'cover', position: 'centre' })
+        .webp({ quality: AVATAR_QUALITY })
+        .toBuffer({ resolveWithObject: true });
 
-            return {
-                buffer: data,
-                mime: 'image/webp',
-                ext: 'webp',
-                width: info.width,
-                height: info.height,
-            };
-        } catch {
-            throw new BadRequestException(
-                'Não foi possível processar a imagem. Tente outro arquivo.',
-            );
-        }
+      return {
+        buffer: data,
+        mime: 'image/webp',
+        ext: 'webp',
+        width: info.width,
+        height: info.height,
+      };
+    } catch {
+      throw new BadRequestException(
+        'Não foi possível processar a imagem. Tente outro arquivo.',
+      );
     }
+  }
 }

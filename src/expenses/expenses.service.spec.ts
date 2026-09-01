@@ -1,7 +1,7 @@
 import { ForbiddenException } from '@nestjs/common';
 
 jest.mock('../prisma/prisma.service', () => ({
-  PrismaService: class PrismaService { },
+  PrismaService: class PrismaService {},
 }));
 
 import { ExpensesService } from './expenses.service';

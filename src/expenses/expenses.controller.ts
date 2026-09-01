@@ -35,7 +35,7 @@ import { CreatePaymentDto } from './dto/create-payment-dto';
 @UseGuards(JwtGuard)
 @Controller('trips/:tripId/expenses')
 export class ExpensesController {
-  constructor(private expensesService: ExpensesService) { }
+  constructor(private expensesService: ExpensesService) {}
 
   @Get()
   @ApiOperation({ summary: 'Listar despesas da viagem' })
@@ -120,7 +120,7 @@ export class ExpensesController {
 @Controller('trips/:tripId/payments')
 @UseGuards(JwtGuard)
 export class PaymentsController {
-  constructor(private readonly paymentsService: ExpensesService) { }
+  constructor(private readonly paymentsService: ExpensesService) {}
 
   @Post()
   async create(

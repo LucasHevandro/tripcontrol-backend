@@ -40,7 +40,7 @@ export class UsersService {
     private uploadValidation: UploadValidationService,
     private imageProcessing: ImageProcessingService,
     @Inject(FILE_STORAGE) private storage: FileStorage,
-  ) { }
+  ) {}
 
   // ─── Buscar perfil ────────────────────────────────────────────────────────
   async getProfile(userId: string) {

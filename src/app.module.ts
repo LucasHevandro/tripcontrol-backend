@@ -37,4 +37,4 @@ import { ReportsModule } from './reports/reports.module';
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
-export class AppModule { }
+export class AppModule {}
