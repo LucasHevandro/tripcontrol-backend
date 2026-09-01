@@ -12,7 +12,7 @@ import { createHash } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { EmailService } from 'src/email/email.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -291,9 +291,12 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } })
-    if (!user) throw new NotFoundException('Usuário não encontrado')
-    if (user.googleId && user.password === null) throw new UnauthorizedException('Conta logada com Google, não é possível recuperar senha')
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+    if (user.googleId && user.password === null)
+      throw new UnauthorizedException(
+        'Conta logada com Google, não é possível recuperar senha',
+      );
 
     const token = crypto.randomUUID();
 
@@ -311,7 +314,7 @@ export class AuthService {
 
     await this.emailService.sendForgotPasswordEmail(user.email, token);
 
-    await this.prisma.refreshToken.deleteMany({ where: { userId: user.id } })
+    await this.prisma.refreshToken.deleteMany({ where: { userId: user.id } });
 
     return { message: 'E-mail de recuperação enviado' };
   }
@@ -322,7 +325,8 @@ export class AuthService {
       where: { tokenHash },
     });
     if (!resetToken) throw new NotFoundException('Token inválido ou expirado');
-    if (resetToken.expiresAt < new Date()) throw new UnauthorizedException('Token expirado');
+    if (resetToken.expiresAt < new Date())
+      throw new UnauthorizedException('Token expirado');
 
     const user = await this.prisma.user.findUnique({
       where: { id: resetToken.userId },

@@ -113,20 +113,13 @@ export class EmailService {
     );
   }
 
-  async sendForgotPasswordEmail(
-    to: string,
-    token: string,
-  ): Promise<boolean> {
+  async sendForgotPasswordEmail(to: string, token: string): Promise<boolean> {
     const appUrl = this.frontendUrl;
     const html = forgotPasswordTemplate({
       appUrl,
-      token
+      token,
     });
 
-    return this.send(
-      to,
-      'Recuperação de senha — TripControl',
-      html,
-    );
+    return this.send(to, 'Recuperação de senha — TripControl', html);
   }
 }

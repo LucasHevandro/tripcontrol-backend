@@ -31,7 +31,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 @UseGuards(JwtGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) { }
+  constructor(private usersService: UsersService) {}
 
   @Get('me')
   @ApiOperation({ summary: 'Buscar perfil do usuário autenticado' })

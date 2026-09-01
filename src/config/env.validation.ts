@@ -29,11 +29,13 @@ export const envValidationSchema = Joi.object({
 
   STORAGE_DRIVER: Joi.string().valid('local', 's3').default('local'),
 
-  S3_ENDPOINT: Joi.string().uri().when('STORAGE_DRIVER', {
-    is: 's3',
-    then: Joi.required(),
-    otherwise: Joi.optional().allow(''),
-  }),
+  S3_ENDPOINT: Joi.string()
+    .uri()
+    .when('STORAGE_DRIVER', {
+      is: 's3',
+      then: Joi.required(),
+      otherwise: Joi.optional().allow(''),
+    }),
 
   S3_REGION: Joi.string().default('auto'),
 
@@ -61,10 +63,11 @@ export const envValidationSchema = Joi.object({
     otherwise: Joi.optional().allow(''),
   }),
 
-  S3_PUBLIC_URL: Joi.string().uri().when('STORAGE_DRIVER', {
-    is: 's3',
-    then: Joi.required(),
-    otherwise: Joi.optional().allow(''),
-  }),
-
+  S3_PUBLIC_URL: Joi.string()
+    .uri()
+    .when('STORAGE_DRIVER', {
+      is: 's3',
+      then: Joi.required(),
+      otherwise: Joi.optional().allow(''),
+    }),
 });

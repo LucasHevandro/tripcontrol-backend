@@ -1,169 +1,169 @@
 export type SupportedLanguage = 'pt-BR' | 'en-US';
 
 interface Strings {
-    reportTitle: string;
-    generatedAt: string;
-    period: string;
-    days: string;
-    participants: string;
-    budget: string;
-    noBudget: string;
-    description: string;
+  reportTitle: string;
+  generatedAt: string;
+  period: string;
+  days: string;
+  participants: string;
+  budget: string;
+  noBudget: string;
+  description: string;
 
-    sectionFinancialSummary: string;
-    sectionByCategory: string;
-    sectionExpenseList: string;
-    sectionBalances: string;
-    sectionSettlements: string;
-    sectionPaymentHistory: string;
+  sectionFinancialSummary: string;
+  sectionByCategory: string;
+  sectionExpenseList: string;
+  sectionBalances: string;
+  sectionSettlements: string;
+  sectionPaymentHistory: string;
 
-    totalSpent: string;
-    perPersonAverage: string;
-    remaining: string;
-    overBudget: string;
+  totalSpent: string;
+  perPersonAverage: string;
+  remaining: string;
+  overBudget: string;
 
-    category: string;
-    total: string;
-    percentage: string;
+  category: string;
+  total: string;
+  percentage: string;
 
-    date: string;
-    expenseDescription: string;
-    paidBy: string;
-    amount: string;
-    individualExpense: string;
+  date: string;
+  expenseDescription: string;
+  paidBy: string;
+  amount: string;
+  individualExpense: string;
 
-    participant: string;
-    paid: string;
-    quota: string;
-    balance: string;
-    positive: string;
-    negative: string;
-    zeroBalance: string;
+  participant: string;
+  paid: string;
+  quota: string;
+  balance: string;
+  positive: string;
+  negative: string;
+  zeroBalance: string;
 
-    from: string;
-    to: string;
-    settlementSuggested: string;
-    allSettled: string;
+  from: string;
+  to: string;
+  settlementSuggested: string;
+  allSettled: string;
 
-    noExpenses: string;
-    noPayments: string;
-    page: string;
-    of: string;
-    reportFooter: string;
+  noExpenses: string;
+  noPayments: string;
+  page: string;
+  of: string;
+  reportFooter: string;
 }
 
 const ptBR: Strings = {
-    reportTitle: 'Relatório da Viagem',
-    generatedAt: 'Gerado em',
-    period: 'Período',
-    days: 'dias',
-    participants: 'Participantes',
-    budget: 'Orçamento',
-    noBudget: 'Sem orçamento definido',
-    description: 'Descrição',
+  reportTitle: 'Relatório da Viagem',
+  generatedAt: 'Gerado em',
+  period: 'Período',
+  days: 'dias',
+  participants: 'Participantes',
+  budget: 'Orçamento',
+  noBudget: 'Sem orçamento definido',
+  description: 'Descrição',
 
-    sectionFinancialSummary: 'Resumo Financeiro',
-    sectionByCategory: 'Despesas por Categoria',
-    sectionExpenseList: 'Lista de Despesas',
-    sectionBalances: 'Saldos por Participante',
-    sectionSettlements: 'Acertos Sugeridos',
-    sectionPaymentHistory: 'Histórico de Pagamentos',
+  sectionFinancialSummary: 'Resumo Financeiro',
+  sectionByCategory: 'Despesas por Categoria',
+  sectionExpenseList: 'Lista de Despesas',
+  sectionBalances: 'Saldos por Participante',
+  sectionSettlements: 'Acertos Sugeridos',
+  sectionPaymentHistory: 'Histórico de Pagamentos',
 
-    totalSpent: 'Total gasto',
-    perPersonAverage: 'Cota por pessoa',
-    remaining: 'Restante do orçamento',
-    overBudget: 'Acima do orçamento',
+  totalSpent: 'Total gasto',
+  perPersonAverage: 'Cota por pessoa',
+  remaining: 'Restante do orçamento',
+  overBudget: 'Acima do orçamento',
 
-    category: 'Categoria',
-    total: 'Total',
-    percentage: '% do total',
+  category: 'Categoria',
+  total: 'Total',
+  percentage: '% do total',
 
-    date: 'Data',
-    expenseDescription: 'Descrição',
-    paidBy: 'Pagou',
-    amount: 'Valor',
-    individualExpense: 'Cada um pagou o seu',
+  date: 'Data',
+  expenseDescription: 'Descrição',
+  paidBy: 'Pagou',
+  amount: 'Valor',
+  individualExpense: 'Cada um pagou o seu',
 
-    participant: 'Participante',
-    paid: 'Pagou',
-    quota: 'Cota',
-    balance: 'Saldo',
-    positive: 'a receber',
-    negative: 'a pagar',
-    zeroBalance: 'zerado',
+  participant: 'Participante',
+  paid: 'Pagou',
+  quota: 'Cota',
+  balance: 'Saldo',
+  positive: 'a receber',
+  negative: 'a pagar',
+  zeroBalance: 'zerado',
 
-    from: 'De',
-    to: 'Para',
-    settlementSuggested: 'Acertos sugeridos',
-    allSettled: 'Nenhum acerto pendente',
+  from: 'De',
+  to: 'Para',
+  settlementSuggested: 'Acertos sugeridos',
+  allSettled: 'Nenhum acerto pendente',
 
-    noExpenses: 'Nenhuma despesa registrada',
-    noPayments: 'Nenhum pagamento realizado',
-    page: 'Página',
-    of: 'de',
-    reportFooter: 'Relatório gerado por TripControl',
+  noExpenses: 'Nenhuma despesa registrada',
+  noPayments: 'Nenhum pagamento realizado',
+  page: 'Página',
+  of: 'de',
+  reportFooter: 'Relatório gerado por TripControl',
 };
 
 const enUS: Strings = {
-    reportTitle: 'Trip Report',
-    generatedAt: 'Generated at',
-    period: 'Period',
-    days: 'days',
-    participants: 'Participants',
-    budget: 'Budget',
-    noBudget: 'No budget defined',
-    description: 'Description',
+  reportTitle: 'Trip Report',
+  generatedAt: 'Generated at',
+  period: 'Period',
+  days: 'days',
+  participants: 'Participants',
+  budget: 'Budget',
+  noBudget: 'No budget defined',
+  description: 'Description',
 
-    sectionFinancialSummary: 'Financial Summary',
-    sectionByCategory: 'Expenses by Category',
-    sectionExpenseList: 'Expense List',
-    sectionBalances: 'Participant Balances',
-    sectionSettlements: 'Suggested Settlements',
-    sectionPaymentHistory: 'Payment History',
+  sectionFinancialSummary: 'Financial Summary',
+  sectionByCategory: 'Expenses by Category',
+  sectionExpenseList: 'Expense List',
+  sectionBalances: 'Participant Balances',
+  sectionSettlements: 'Suggested Settlements',
+  sectionPaymentHistory: 'Payment History',
 
-    totalSpent: 'Total spent',
-    perPersonAverage: 'Per person',
-    remaining: 'Remaining budget',
-    overBudget: 'Over budget',
+  totalSpent: 'Total spent',
+  perPersonAverage: 'Per person',
+  remaining: 'Remaining budget',
+  overBudget: 'Over budget',
 
-    category: 'Category',
-    total: 'Total',
-    percentage: '% of total',
+  category: 'Category',
+  total: 'Total',
+  percentage: '% of total',
 
-    date: 'Date',
-    expenseDescription: 'Description',
-    paidBy: 'Paid by',
-    amount: 'Amount',
-    individualExpense: 'Each paid their own',
+  date: 'Date',
+  expenseDescription: 'Description',
+  paidBy: 'Paid by',
+  amount: 'Amount',
+  individualExpense: 'Each paid their own',
 
-    participant: 'Participant',
-    paid: 'Paid',
-    quota: 'Share',
-    balance: 'Balance',
-    positive: 'to receive',
-    negative: 'to pay',
-    zeroBalance: 'settled',
+  participant: 'Participant',
+  paid: 'Paid',
+  quota: 'Share',
+  balance: 'Balance',
+  positive: 'to receive',
+  negative: 'to pay',
+  zeroBalance: 'settled',
 
-    from: 'From',
-    to: 'To',
-    settlementSuggested: 'Suggested settlements',
-    allSettled: 'No pending settlements',
+  from: 'From',
+  to: 'To',
+  settlementSuggested: 'Suggested settlements',
+  allSettled: 'No pending settlements',
 
-    noExpenses: 'No expenses registered',
-    noPayments: 'No payments made',
-    page: 'Page',
-    of: 'of',
-    reportFooter: 'Report generated by TripControl',
+  noExpenses: 'No expenses registered',
+  noPayments: 'No payments made',
+  page: 'Page',
+  of: 'of',
+  reportFooter: 'Report generated by TripControl',
 };
 
 const TRANSLATIONS: Record<SupportedLanguage, Strings> = {
-    'pt-BR': ptBR,
-    'en-US': enUS,
+  'pt-BR': ptBR,
+  'en-US': enUS,
 };
 
 export function getTranslations(language: string): Strings {
-    if (language in TRANSLATIONS) {
-        return TRANSLATIONS[language as SupportedLanguage];
-    }
-    return ptBR;
+  if (language in TRANSLATIONS) {
+    return TRANSLATIONS[language as SupportedLanguage];
+  }
+  return ptBR;
 }
