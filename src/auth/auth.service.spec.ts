@@ -1,10 +1,11 @@
 import { createHash } from 'crypto';
 
 jest.mock('../prisma/prisma.service', () => ({
-  PrismaService: class PrismaService {},
+  PrismaService: class PrismaService { },
 }));
 
 import { AuthService } from './auth.service';
+import { EmailService } from 'src/email/email.service';
 
 describe('AuthService', () => {
   const createService = () => {
@@ -43,9 +44,13 @@ describe('AuthService', () => {
       }),
     };
 
+    const email = {
+      send: jest.fn(),
+    };
+
     return {
       prisma,
-      service: new AuthService(prisma as any, jwt as any, config as any),
+      service: new AuthService(prisma as any, jwt as any, config as any, email as any),
     };
   };
 

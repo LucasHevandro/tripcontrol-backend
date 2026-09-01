@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 import {
   inviteTemplate,
   debtorNotificationTemplate,
+  forgotPasswordTemplate,
 } from './templates/email.templates';
 
 @Injectable()
@@ -108,6 +109,23 @@ export class EmailService {
     return this.send(
       params.to,
       `Lembrete de acerto — ${params.tripName}`,
+      html,
+    );
+  }
+
+  async sendForgotPasswordEmail(
+    to: string,
+    token: string,
+  ): Promise<boolean> {
+    const appUrl = this.frontendUrl;
+    const html = forgotPasswordTemplate({
+      appUrl,
+      token
+    });
+
+    return this.send(
+      to,
+      'Recuperação de senha — TripControl',
       html,
     );
   }

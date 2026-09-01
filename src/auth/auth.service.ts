@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -11,6 +12,7 @@ import { createHash } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +22,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private configService: ConfigService,
+    private emailService: EmailService,
   ) {
     this.googleClient = new OAuth2Client(
       this.configService.get<string>('GOOGLE_CLIENT_ID'),
@@ -285,5 +288,57 @@ export class AuthService {
 
   private parseDurationToSeconds(value: string) {
     return Math.floor(this.parseDurationToMilliseconds(value) / 1000);
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } })
+    if (!user) throw new NotFoundException('Usuário não encontrado')
+    if (user.googleId && user.password === null) throw new UnauthorizedException('Conta logada com Google, não é possível recuperar senha')
+
+    const token = crypto.randomUUID();
+
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await this.prisma.passwordResetToken.create({
+      data: {
+        tokenHash,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    await this.emailService.sendForgotPasswordEmail(user.email, token);
+
+    await this.prisma.refreshToken.deleteMany({ where: { userId: user.id } })
+
+    return { message: 'E-mail de recuperação enviado' };
+  }
+
+  async resetPassword(token: string, password: string) {
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    const resetToken = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+    });
+    if (!resetToken) throw new NotFoundException('Token inválido ou expirado');
+    if (resetToken.expiresAt < new Date()) throw new UnauthorizedException('Token expirado');
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: resetToken.userId },
+    });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+
+    await this.prisma.passwordResetToken.delete({
+      where: { tokenHash },
+    });
+
+    return { message: 'Senha redefinida com sucesso' };
   }
 }

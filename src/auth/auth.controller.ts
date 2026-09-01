@@ -16,6 +16,7 @@ import {
   ApiOkResponse,
   ApiUnauthorizedResponse,
   ApiConflictResponse,
+  ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -24,11 +25,13 @@ import { GoogleLoginDto } from './dto/google-login.dto';
 import { JwtGuard } from './guards/jwt.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { ForgotPasswordDto } from './dto/forgotpassword.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Post('register')
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -84,5 +87,24 @@ export class AuthController {
   @ApiOperation({ summary: 'Retornar dados do usuário autenticado' })
   me(@CurrentUser() user: { id: string }) {
     return this.authService.me(user.id);
+  }
+
+  @Post('forgot-password')
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Solicitar recuperação de senha' })
+  @ApiCreatedResponse({ description: 'E-mail de recuperação enviado' })
+  @ApiNotFoundResponse({ description: 'E-mail não encontrado' })
+  @ApiUnauthorizedResponse({ description: 'Conta logada com Google' })
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Redefinir senha usando token' })
+  @ApiCreatedResponse({ description: 'Senha redefinida com sucesso' })
+  @ApiNotFoundResponse({ description: 'Token inválido ou expirado' })
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.password);
   }
 }
