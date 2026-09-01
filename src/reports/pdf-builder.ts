@@ -41,15 +41,18 @@ export async function buildTripReportPdf(data: TripReportData): Promise<Buffer> 
 
 function renderReport(doc: PDFKit.PDFDocument, data: TripReportData) {
     const t = getTranslations(data.userLanguage);
+
     const currency = new Intl.NumberFormat(data.userLanguage, {
         style: 'currency',
         currency: data.userCurrency,
     });
+
     const dateFmt = new Intl.DateTimeFormat(data.userLanguage, {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
     });
+
     const dateTimeFmt = new Intl.DateTimeFormat(data.userLanguage, {
         day: '2-digit',
         month: 'short',
