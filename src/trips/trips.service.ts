@@ -2,13 +2,14 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { TripStatus } from '../generated/prisma/enums';
 import { BalanceCalculatorService } from '../finances/balance.service';
-import { suggestTripStatus } from './trip-status.util';
+import { hasNotStarted, suggestTripStatus } from './trip-status.util';
 
 @Injectable()
 export class TripsService {
@@ -18,7 +19,6 @@ export class TripsService {
   ) { }
 
   // ─── Listar viagens do usuário ────────────────────────────────────────────
-
   async findAll(userId: string) {
     const participations = await this.prisma.tripParticipant.findMany({
       where: { userId },
@@ -81,7 +81,6 @@ export class TripsService {
   }
 
   // ─── Criar viagem ─────────────────────────────────────────────────────────
-
   async create(userId: string, dto: CreateTripDto) {
     const trip = await this.prisma.trip.create({
       data: {
@@ -117,7 +116,6 @@ export class TripsService {
   }
 
   // ─── Buscar uma viagem ────────────────────────────────────────────────────
-
   async findOne(userId: string, tripId: string) {
     const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
@@ -140,7 +138,6 @@ export class TripsService {
   }
 
   // ─── Dashboard ────────────────────────────────────────────────────────────
-
   async getDashboard(userId: string, tripId: string) {
     await this.assertParticipant(userId, tripId);
 
@@ -267,7 +264,6 @@ export class TripsService {
   }
 
   // ─── Atualizar viagem ─────────────────────────────────────────────────────
-
   async update(userId: string, tripId: string, dto: UpdateTripDto) {
     await this.assertOrganizer(userId, tripId);
 
@@ -283,9 +279,20 @@ export class TripsService {
   }
 
   // ─── Deletar viagem ───────────────────────────────────────────────────────
-
   async remove(userId: string, tripId: string) {
     await this.assertOrganizer(userId, tripId);
+
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { startDate: true },
+    });
+    if (!trip) throw new NotFoundException('Viagem não encontrada');
+
+    if (!hasNotStarted(trip.startDate)) {
+      throw new BadRequestException(
+        'Só é possível excluir viagens que ainda não começaram',
+      );
+    }
 
     await this.prisma.trip.delete({ where: { id: tripId } });
     return { message: 'Viagem removida com sucesso' };

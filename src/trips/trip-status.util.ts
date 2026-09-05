@@ -26,3 +26,7 @@ export function suggestTripStatus(
 function startOfDay(date: Date): number {
     return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
 }
+
+export function hasNotStarted(startDate: Date, now: Date = new Date()): boolean {
+    return startOfDay(now) < startOfDay(startDate);
+}

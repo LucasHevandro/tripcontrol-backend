@@ -1,5 +1,5 @@
 import { TripStatus } from '../generated/prisma/enums';
-import { suggestTripStatus } from './trip-status.util';
+import { suggestTripStatus, hasNotStarted } from './trip-status.util';
 
 const start = new Date('2026-07-10T00:00:00.000Z');
 const end = new Date('2026-07-17T00:00:00.000Z');
@@ -46,5 +46,16 @@ describe('suggestTripStatus', () => {
         expect(
             suggestTripStatus(TripStatus.COMPLETED, start, end, at('2026-08-01T12:00:00Z')),
         ).toBeNull();
+    });
+});
+
+describe('hasNotStarted', () => {
+    it('é verdadeiro antes do dia de início', () => {
+        expect(hasNotStarted(start, at('2026-07-09T23:00:00Z'))).toBe(true);
+    });
+
+    it('é falso no dia de início e depois', () => {
+        expect(hasNotStarted(start, at('2026-07-10T00:30:00Z'))).toBe(false);
+        expect(hasNotStarted(start, at('2026-08-01T12:00:00Z'))).toBe(false);
     });
 });
