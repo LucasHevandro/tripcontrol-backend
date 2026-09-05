@@ -292,32 +292,29 @@ export class AuthService {
 
   //Esqueci minha senha
   async forgotPassword(email: string) {
+    const genericResponse = {
+      message:
+        'Se este e-mail estiver cadastrado, você receberá um link de recuperação',
+    };
+
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw new NotFoundException('Usuário não encontrado');
-    if (user.googleId && user.password === null)
-      throw new UnauthorizedException(
-        'Conta logada com Google, não é possível recuperar senha',
-      );
+    if (!user || user.password === null) return genericResponse;
+
+    await this.prisma.passwordResetToken.deleteMany({
+      where: { userId: user.id },
+    });
 
     const token = crypto.randomUUID();
-
     const tokenHash = createHash('sha256').update(token).digest('hex');
-
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
     await this.prisma.passwordResetToken.create({
-      data: {
-        tokenHash,
-        userId: user.id,
-        expiresAt,
-      },
+      data: { tokenHash, userId: user.id, expiresAt },
     });
 
     await this.emailService.sendForgotPasswordEmail(user.email, token);
 
-    await this.prisma.refreshToken.deleteMany({ where: { userId: user.id } });
-
-    return { message: 'E-mail de recuperação enviado' };
+    return genericResponse;
   }
 
   //Resetar senha
@@ -335,12 +332,16 @@ export class AuthService {
     });
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
     await this.prisma.user.update({
       where: { id: user.id },
       data: { password: hashedPassword },
     });
 
+    //Invalidar todos os refresh tokens do usuário
+    await this.prisma.refreshToken.deleteMany({ where: { userId: user.id } });
+
+    //Remover o token de redefinição de senha
     await this.prisma.passwordResetToken.delete({
       where: { tokenHash },
     });
