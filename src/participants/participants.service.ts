@@ -305,12 +305,40 @@ export class ParticipantsService {
     if (!participant)
       throw new NotFoundException('Participante não encontrado');
 
-    const expenseSplitCount = await this.prisma.expenseSplit.count({
-      where: { participantId: participant.id },
-    });
-    if (expenseSplitCount > 0) {
+    const [expenseSplitCount, paidExpenseCount, paymentCount, sponsoredCount] =
+      await Promise.all([
+        this.prisma.expenseSplit.count({
+          where: { participantId: participant.id },
+        }),
+        this.prisma.expense.count({ where: { paidById: participant.id } }),
+        this.prisma.payment.count({
+          where: {
+            OR: [
+              { fromParticipantId: participant.id },
+              { toParticipantId: participant.id },
+            ],
+          },
+        }),
+        this.prisma.tripParticipant.count({
+          where: { sponsorId: participant.id },
+        }),
+      ]);
+
+    if (expenseSplitCount > 0 || paidExpenseCount > 0) {
       throw new BadRequestException(
         'Este participante já tem despesas registradas nesta viagem e não pode ser removido',
+      );
+    }
+
+    if (paymentCount > 0) {
+      throw new BadRequestException(
+        'Este participante já tem pagamentos registrados nesta viagem e não pode ser removido',
+      );
+    }
+
+    if (sponsoredCount > 0) {
+      throw new BadRequestException(
+        'Este participante é responsável por outros participantes. Remova ou transfira os dependentes primeiro',
       );
     }
 

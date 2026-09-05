@@ -1,5 +1,5 @@
 jest.mock('../prisma/prisma.service', () => ({
-  PrismaService: class PrismaService {},
+  PrismaService: class PrismaService { },
 }));
 
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
@@ -13,11 +13,12 @@ describe('ParticipantsService', () => {
         findMany: jest.fn(),
         findUnique: jest.fn(),
         update: jest.fn(),
-        count: jest.fn(),
+        count: jest.fn().mockResolvedValue(0),
         delete: jest.fn(),
       },
       expense: {
         findMany: jest.fn(),
+        count: jest.fn().mockResolvedValue(0),
       },
       expenseSplit: {
         findMany: jest.fn(),
@@ -25,6 +26,7 @@ describe('ParticipantsService', () => {
       },
       payment: {
         findMany: jest.fn(),
+        count: jest.fn().mockResolvedValue(0),
       },
     };
     const tripsService = {
@@ -305,6 +307,36 @@ describe('ParticipantsService', () => {
       await expect(
         service.setSponsor('user-carlos', TRIP, 'user-bruno-esposa', null),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('bloqueia remover participante com pagamentos registrados', async () => {
+      const { prisma, service } = createService();
+      prisma.tripParticipant.findUnique.mockResolvedValue({
+        id: 'participant-b',
+      });
+      prisma.expenseSplit.count.mockResolvedValue(0);
+      prisma.payment.count.mockResolvedValue(1);
+
+      await expect(
+        service.remove('user-a', 'trip-1', 'user-b'),
+      ).rejects.toThrow(/pagamentos registrados/);
+
+      expect(prisma.tripParticipant.delete).not.toHaveBeenCalled();
+    });
+
+    it('bloqueia remover participante que patrocina outros', async () => {
+      const { prisma, service } = createService();
+      prisma.tripParticipant.findUnique.mockResolvedValue({
+        id: 'participant-b',
+      });
+      prisma.expenseSplit.count.mockResolvedValue(0);
+      prisma.tripParticipant.count.mockResolvedValue(1);
+
+      await expect(
+        service.remove('user-a', 'trip-1', 'user-b'),
+      ).rejects.toThrow(/dependentes/);
+
+      expect(prisma.tripParticipant.delete).not.toHaveBeenCalled();
     });
   });
 });
