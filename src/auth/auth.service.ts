@@ -30,7 +30,6 @@ export class AuthService {
   }
 
   // ─── Registro ────────────────────────────────────────────────────────────
-
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -64,7 +63,6 @@ export class AuthService {
   }
 
   // ─── Login ───────────────────────────────────────────────────────────────
-
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -75,13 +73,19 @@ export class AuthService {
     }
 
     // Conta criada via Google não possui senha local
-    if (!user.password) {
+    if (!user.password && user.googleId) {
       throw new UnauthorizedException(
         'Esta conta usa login com Google. Entre pelo botão do Google.',
       );
     }
 
-    const passwordMatch = await bcrypt.compare(dto.password, user.password);
+    if (!user.password && user.googleId) {
+      throw new UnauthorizedException(
+        'Esta conta usa login com Google. Entre pelo botão do Google.',
+      );
+    }
+
+    const passwordMatch = await bcrypt.compare(dto.password, user.password!);
 
     if (!passwordMatch) {
       throw new UnauthorizedException('Credenciais inválidas');
@@ -100,7 +104,6 @@ export class AuthService {
   }
 
   // ─── Login com Google ─────────────────────────────────────────────────────
-
   async googleLogin(credential: string) {
     const payload = await this.verifyGoogleToken(credential);
 
@@ -175,7 +178,6 @@ export class AuthService {
   }
 
   // ─── Refresh ──────────────────────────────────────────────────────────────
-
   async refresh(userId: string, oldRefreshToken: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -194,7 +196,6 @@ export class AuthService {
   }
 
   // ─── Logout ───────────────────────────────────────────────────────────────
-
   async logout(userId: string) {
     await this.prisma.refreshToken.deleteMany({
       where: { userId },
@@ -204,7 +205,6 @@ export class AuthService {
   }
 
   // ─── Me ───────────────────────────────────────────────────────────────────
-
   async me(userId: string) {
     return this.prisma.user.findUnique({
       where: { id: userId },
@@ -225,7 +225,6 @@ export class AuthService {
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
-
   private async generateTokens(userId: string, email: string) {
     const payload = { sub: userId, email };
 
@@ -247,6 +246,7 @@ export class AuthService {
       'JWT_REFRESH_EXPIRES_IN',
       '7d',
     );
+
     const expiresAt = new Date(
       Date.now() + this.parseDurationToMilliseconds(refreshExpiresIn),
     );
@@ -290,6 +290,7 @@ export class AuthService {
     return Math.floor(this.parseDurationToMilliseconds(value) / 1000);
   }
 
+  //Esqueci minha senha
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new NotFoundException('Usuário não encontrado');
@@ -319,6 +320,7 @@ export class AuthService {
     return { message: 'E-mail de recuperação enviado' };
   }
 
+  //Resetar senha
   async resetPassword(token: string, password: string) {
     const tokenHash = createHash('sha256').update(token).digest('hex');
     const resetToken = await this.prisma.passwordResetToken.findUnique({
