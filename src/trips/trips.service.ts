@@ -8,13 +8,14 @@ import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { TripStatus } from '../generated/prisma/enums';
 import { BalanceCalculatorService } from '../finances/balance.service';
+import { suggestTripStatus } from './trip-status.util';
 
 @Injectable()
 export class TripsService {
   constructor(
     private prisma: PrismaService,
     private balanceCalc: BalanceCalculatorService,
-  ) {}
+  ) { }
 
   // ─── Listar viagens do usuário ────────────────────────────────────────────
 
@@ -207,6 +208,16 @@ export class TripsService {
       hasExpenses: trip._count.expenses > 0,
     };
 
+    const statusSuggestion = suggestTripStatus(
+      trip.status,
+      trip.startDate,
+      trip.endDate,
+    );
+
+    const isOrganizer = trip.participants.some(
+      (p) => p.userId === userId && p.role === 'ORGANIZER',
+    );
+
     return {
       trip: {
         id: trip.id,
@@ -215,6 +226,8 @@ export class TripsService {
         startDate: trip.startDate,
         endDate: trip.endDate,
         status: trip.status,
+        statusSuggestion,
+        isOrganizer,
         participantCount: trip.participants.length,
       },
       totalSpent,
