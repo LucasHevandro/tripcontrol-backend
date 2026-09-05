@@ -10,6 +10,11 @@ import { UpdateTripDto } from './dto/update-trip.dto';
 import { TripStatus } from '../generated/prisma/enums';
 import { BalanceCalculatorService } from '../finances/balance.service';
 import { hasNotStarted, suggestTripStatus } from './trip-status.util';
+import {
+  APP_TIME_ZONE,
+  formatDateOnly,
+  todayRangeUtc,
+} from '../common/date.util';
 
 @Injectable()
 export class TripsService {
@@ -158,10 +163,7 @@ export class TripsService {
         },
         activities: {
           where: {
-            date: {
-              gte: this.startOfDay(new Date()),
-              lte: this.endOfDay(new Date()),
-            },
+            date: todayRangeUtc(),
           },
           orderBy: { startTime: 'asc' },
         },
@@ -241,23 +243,14 @@ export class TripsService {
         paidByName: e.paidBy.name,
         paidByParticipantId: e.paidById,
         amount: Number(e.amount),
-        date: e.date.toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-        }),
+        date: formatDateOnly(e.date, { day: '2-digit', month: '2-digit' }),
       })),
-      todayLabel: new Date().toLocaleDateString('pt-BR', {
+      todayLabel: new Intl.DateTimeFormat('pt-BR', {
         weekday: 'short',
         day: '2-digit',
         month: 'short',
-      }),
-      todayActivities: trip.activities.map((a) => ({
-        id: a.id,
-        time: a.startTime,
-        title: a.title,
-        location: a.location ?? '',
-        status: a.status.toLowerCase(),
-      })),
+        timeZone: APP_TIME_ZONE,
+      }).format(new Date()),
       participants: participantsWithBalance,
       newTripStatus,
     };
@@ -316,18 +309,6 @@ export class TripsService {
       );
     }
     return participation;
-  }
-
-  private startOfDay(date: Date) {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-
-  private endOfDay(date: Date) {
-    const d = new Date(date);
-    d.setHours(23, 59, 59, 999);
-    return d;
   }
 
   private async calculateParticipantBalances(tripId: string) {

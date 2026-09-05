@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
 import { BalanceCalculatorService } from '../finances/balance.service';
 import { TripStatus } from '../generated/prisma/enums';
+import { dateOnlyParts, formatDateOnly } from '../common/date.util';
 
 const TRIP_STATUS_LABEL: Record<TripStatus, string> = {
   PLANNING: 'Planejando',
@@ -41,7 +42,7 @@ export class ParticipantsService {
     private config: ConfigService,
     private email: EmailService,
     private readonly balanceCalc: BalanceCalculatorService,
-  ) {}
+  ) { }
 
   /** Monta o link de convite usando a URL do frontend configurada por ambiente */
   private buildInviteLink(inviteToken: string | undefined): string {
@@ -162,9 +163,9 @@ export class ParticipantsService {
     const existingUserIds = existingUsers.map((u) => u.id);
     const existingParticipants = existingUserIds.length
       ? await this.prisma.tripParticipant.findMany({
-          where: { tripId, userId: { in: existingUserIds } },
-          select: { userId: true },
-        })
+        where: { tripId, userId: { in: existingUserIds } },
+        select: { userId: true },
+      })
       : [];
     const alreadyParticipantUserIds = new Set(
       existingParticipants.map((p) => p.userId),
@@ -602,12 +603,9 @@ export class ParticipantsService {
   }
 
   private formatPeriod(start: Date, end: Date): string {
-    const startDay = start.getDate();
-    const endDay = end.getDate();
-    const month = end
-      .toLocaleDateString('pt-BR', { month: 'short' })
-      .replace('.', '');
-    const year = end.getFullYear();
+    const { day: startDay } = dateOnlyParts(start);
+    const { day: endDay, year } = dateOnlyParts(end);
+    const month = formatDateOnly(end, { month: 'short' }).replace('.', '');
     return `${startDay}–${endDay} ${month} ${year}`;
   }
 }

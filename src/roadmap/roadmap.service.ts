@@ -5,13 +5,14 @@ import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
 import { ActivityStatus, CostType } from '../generated/prisma/enums';
 import type { RoadmapActivityModel } from '../generated/prisma/models';
+import { dateOnlyParts, formatDateOnly } from '../common/date.util';
 
 @Injectable()
 export class RoadmapService {
   constructor(
     private prisma: PrismaService,
     private tripsService: TripsService,
-  ) {}
+  ) { }
 
   // ─── Listar roteiro completo ───────────────────────────────────────────────
 
@@ -61,7 +62,7 @@ export class RoadmapService {
     const durationDays =
       Math.round(
         (trip.endDate.getTime() - trip.startDate.getTime()) /
-          (1000 * 60 * 60 * 24),
+        (1000 * 60 * 60 * 24),
       ) + 1;
 
     return {
@@ -196,15 +197,16 @@ export class RoadmapService {
         return actDate === dateStr;
       });
 
-      const weekday = current.toLocaleDateString('pt-BR', { weekday: 'short' });
-      const day = current.getDate().toString().padStart(2, '0');
-      const month = (current.getMonth() + 1).toString().padStart(2, '0');
+      const weekday = formatDateOnly(current, { weekday: 'short' });
+      const { day: dayNum, month: monthNum } = dateOnlyParts(current);
+      const day = dayNum.toString().padStart(2, '0');
+      const month = monthNum.toString().padStart(2, '0');
 
       days.push({
         date: dateStr,
         label: `${this.capitalizeFirst(weekday)} ${day}/${month}`,
         shortLabel: `${this.capitalizeFirst(weekday)} ${day}/${month}`,
-        fullLabel: current.toLocaleDateString('pt-BR', {
+        fullLabel: formatDateOnly(current, {
           weekday: 'long',
           day: 'numeric',
           month: 'long',
@@ -271,12 +273,9 @@ export class RoadmapService {
   }
 
   private formatPeriod(start: Date, end: Date): string {
-    const startDay = start.getDate();
-    const endDay = end.getDate();
-    const month = end
-      .toLocaleDateString('pt-BR', { month: 'short' })
-      .replace('.', '');
-    const year = end.getFullYear();
+    const { day: startDay } = dateOnlyParts(start);
+    const { day: endDay, year } = dateOnlyParts(end);
+    const month = formatDateOnly(end, { month: 'short' }).replace('.', '');
     return `${startDay}–${endDay} ${month} ${year}`;
   }
 

@@ -12,6 +12,7 @@ import {
   ReservationStatus,
 } from '../generated/prisma/enums';
 import type { ReservationModel } from '../generated/prisma/models';
+import { dateOnlyParts, formatDateOnly } from '../common/date.util';
 
 // Campos específicos por categoria, armazenados soltos no Json `details` —
 // nenhuma categoria usa todos, cada uma lê só os campos que lhe interessam.
@@ -50,7 +51,7 @@ export class ReservationsService {
   constructor(
     private prisma: PrismaService,
     private tripsService: TripsService,
-  ) {}
+  ) { }
 
   // ─── Listar reservas ──────────────────────────────────────────────────────
 
@@ -311,12 +312,9 @@ export class ReservationsService {
   }
 
   private formatPeriod(start: Date, end: Date): string {
-    const startDay = start.getDate();
-    const endDay = end.getDate();
-    const month = end
-      .toLocaleDateString('pt-BR', { month: 'short' })
-      .replace('.', '');
-    const year = end.getFullYear();
+    const { day: startDay } = dateOnlyParts(start);
+    const { day: endDay, year } = dateOnlyParts(end);
+    const month = formatDateOnly(end, { month: 'short' }).replace('.', '');
     return `${startDay}–${endDay} ${month} ${year}`;
   }
 }
