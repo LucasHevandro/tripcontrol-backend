@@ -63,14 +63,20 @@ function renderReport(doc: PDFKit.PDFDocument, data: TripReportData) {
     minute: '2-digit',
   });
 
+  const dateShortFmt = new Intl.DateTimeFormat(data.userLanguage, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
   renderHeader(doc, t, dateTimeFmt);
   renderCover(doc, data, t, dateFmt, currency);
   renderFinancialSummary(doc, data, t, currency);
   renderByCategory(doc, data, t, currency);
-  renderExpenseList(doc, data, t, currency, dateFmt);
+  renderExpenseList(doc, data, t, currency, dateShortFmt);
   renderBalances(doc, data, t, currency);
   renderSettlements(doc, data, t, currency);
-  renderPaymentHistory(doc, data, t, currency, dateFmt);
+  renderPaymentHistory(doc, data, t, currency, dateShortFmt);
   renderFooter(doc, t);
 }
 
@@ -131,7 +137,7 @@ function renderCover(
 
   const days = Math.ceil(
     (data.trip.endDate.getTime() - data.trip.startDate.getTime()) /
-      (1000 * 60 * 60 * 24),
+    (1000 * 60 * 60 * 24),
   );
   doc
     .fillColor(COLORS.muted)
@@ -271,15 +277,16 @@ function renderByCategory(
     ensureSpace(doc, 18);
     const y = doc.y;
     doc.font('Helvetica').fontSize(10).fillColor(COLORS.text);
-    doc.text(cat.category, cols[0].x, y, { width: cols[0].width });
-    doc.text(currency.format(cat.total), cols[1].x, y, {
-      width: cols[1].width,
-      align: 'right',
-    });
-    doc.text(`${cat.percentage.toFixed(1)}%`, cols[2].x, y, {
-      width: cols[2].width,
-      align: 'right',
-    });
+    cell(doc, cat.category, cols[0].x, y, cols[0].width);
+    cell(doc, currency.format(cat.total), cols[1].x, y, cols[1].width, 'right');
+    cell(
+      doc,
+      `${cat.percentage.toFixed(1)}%`,
+      cols[2].x,
+      y,
+      cols[2].width,
+      'right',
+    );
     doc.y = y + 16;
   }
   doc.moveDown(0.5);
@@ -306,13 +313,13 @@ function renderExpenseList(
   }
 
   const cols = [
-    { label: t.date, x: MARGINS.left, width: 90 },
-    { label: t.expenseDescription, x: MARGINS.left + 100, width: 180 },
-    { label: t.paidBy, x: MARGINS.left + 290, width: 100 },
+    { label: t.date, x: MARGINS.left, width: 55 },
+    { label: t.expenseDescription, x: MARGINS.left + 60, width: 154 },
+    { label: t.paidBy, x: MARGINS.left + 230, width: 155 },
     {
       label: t.amount,
-      x: MARGINS.left + 400,
-      width: 100,
+      x: MARGINS.left + 390,
+      width: 105,
       align: 'right' as const,
     },
   ];
@@ -322,22 +329,14 @@ function renderExpenseList(
     ensureSpace(doc, 18);
     const y = doc.y;
     doc.font('Helvetica').fontSize(9).fillColor(COLORS.text);
-    doc.text(dateFmt.format(new Date(e.date)), cols[0].x, y, {
-      width: cols[0].width,
-    });
-    doc.text(e.description, cols[1].x, y, {
-      width: cols[1].width,
-      ellipsis: true,
-    });
+    cell(doc, dateFmt.format(new Date(e.date)), cols[0].x, y, cols[0].width);
+    cell(doc, e.description, cols[1].x, y, cols[1].width);
     const payerText =
       e.splitType === 'INDIVIDUAL' ? t.individualExpense : e.paidByName;
     doc.font(e.splitType === 'INDIVIDUAL' ? 'Helvetica-Oblique' : 'Helvetica');
-    doc.text(payerText, cols[2].x, y, { width: cols[2].width, ellipsis: true });
+    cell(doc, payerText, cols[2].x, y, cols[2].width);
     doc.font('Helvetica-Bold').fillColor(COLORS.text);
-    doc.text(currency.format(e.amount), cols[3].x, y, {
-      width: cols[3].width,
-      align: 'right',
-    });
+    cell(doc, currency.format(e.amount), cols[3].x, y, cols[3].width, 'right');
     doc.y = y + 16;
   }
   doc.moveDown(0.5);
@@ -353,23 +352,13 @@ function renderBalances(
   sectionHeader(doc, t.sectionBalances);
 
   const cols = [
-    { label: t.participant, x: MARGINS.left, width: 200 },
-    {
-      label: t.paid,
-      x: MARGINS.left + 210,
-      width: 90,
-      align: 'right' as const,
-    },
-    {
-      label: t.quota,
-      x: MARGINS.left + 310,
-      width: 90,
-      align: 'right' as const,
-    },
+    { label: t.participant, x: MARGINS.left, width: 165 },
+    { label: t.paid, x: MARGINS.left + 170, width: 85, align: 'right' as const },
+    { label: t.quota, x: MARGINS.left + 260, width: 85, align: 'right' as const },
     {
       label: t.balance,
-      x: MARGINS.left + 410,
-      width: 100,
+      x: MARGINS.left + 350,
+      width: 145,
       align: 'right' as const,
     },
   ];
@@ -379,17 +368,29 @@ function renderBalances(
     ensureSpace(doc, 18);
     const y = doc.y;
     doc.font('Helvetica').fontSize(10).fillColor(COLORS.text);
-    doc.text(p.name + (p.isOrganizer ? ' ★' : ''), cols[0].x, y, {
-      width: cols[0].width,
-    });
-    doc.text(currency.format(p.totalPaid), cols[1].x, y, {
-      width: cols[1].width,
-      align: 'right',
-    });
-    doc.text(currency.format(p.individualQuota), cols[2].x, y, {
-      width: cols[2].width,
-      align: 'right',
-    });
+    cell(
+      doc,
+      p.name + (p.isOrganizer ? ` (org.)` : ''),
+      cols[0].x,
+      y,
+      cols[0].width,
+    );
+    cell(
+      doc,
+      currency.format(p.totalPaid),
+      cols[1].x,
+      y,
+      cols[1].width,
+      'right',
+    );
+    cell(
+      doc,
+      currency.format(p.individualQuota),
+      cols[2].x,
+      y,
+      cols[2].width,
+      'right',
+    );
 
     const balanceLabel =
       p.balance > 0.01
@@ -405,10 +406,7 @@ function renderBalances(
           : COLORS.zero;
 
     doc.font('Helvetica-Bold').fillColor(balanceColor);
-    doc.text(balanceLabel, cols[3].x, y, {
-      width: cols[3].width,
-      align: 'right',
-    });
+    cell(doc, balanceLabel, cols[3].x, y, cols[3].width, 'right');
     doc.y = y + 16;
   }
   doc.moveDown(0.5);
@@ -437,12 +435,22 @@ function renderSettlements(
     ensureSpace(doc, 18);
     const y = doc.y;
     doc.font('Helvetica').fontSize(10).fillColor(COLORS.text);
-    doc.text(`${s.fromName}  →  ${s.toName}`, MARGINS.left, y);
+    cell(
+      doc,
+      `${s.fromName}  ->  ${s.toName}`,
+      MARGINS.left,
+      y,
+      contentWidth(doc) - 110,
+    );
     doc.font('Helvetica-Bold').fillColor(COLORS.primary);
-    doc.text(currency.format(s.amount), MARGINS.left, y, {
-      width: doc.page.width - MARGINS.left - MARGINS.right,
-      align: 'right',
-    });
+    cell(
+      doc,
+      currency.format(s.amount),
+      MARGINS.left,
+      y,
+      contentWidth(doc),
+      'right',
+    );
     doc.y = y + 16;
   }
   doc.moveDown(0.5);
@@ -471,14 +479,30 @@ function renderPaymentHistory(
     ensureSpace(doc, 30);
     const y = doc.y;
     doc.font('Helvetica').fontSize(10).fillColor(COLORS.text);
-    doc.text(`${p.fromName}  →  ${p.toName}`, MARGINS.left, y);
+    cell(
+      doc,
+      `${p.fromName}  ->  ${p.toName}`,
+      MARGINS.left,
+      y,
+      contentWidth(doc) - 110,
+    );
     doc.font('Helvetica-Bold').fillColor(COLORS.primary);
-    doc.text(currency.format(p.amount), MARGINS.left, y, {
-      width: doc.page.width - MARGINS.left - MARGINS.right,
-      align: 'right',
-    });
+    cell(
+      doc,
+      currency.format(p.amount),
+      MARGINS.left,
+      y,
+      contentWidth(doc),
+      'right',
+    );
     doc.font('Helvetica').fontSize(8).fillColor(COLORS.muted);
-    doc.text(dateFmt.format(new Date(p.paidAt)), MARGINS.left, y + 12);
+    cell(
+      doc,
+      dateFmt.format(new Date(p.paidAt)),
+      MARGINS.left,
+      y + 12,
+      contentWidth(doc),
+    );
     doc.y = y + 26;
   }
 }
@@ -491,37 +515,68 @@ function renderFooter(
   const range = doc.bufferedPageRange();
   for (let i = 0; i < range.count; i++) {
     doc.switchToPage(range.start + i);
-    const bottomY = doc.page.height - 30;
+
+    const originalBottom = doc.page.margins.bottom;
+    doc.page.margins.bottom = 0;
+
+    const bottomY = doc.page.height - 35;
     doc.font('Helvetica').fontSize(8).fillColor(COLORS.muted);
     doc.text(t.reportFooter, MARGINS.left, bottomY, {
       width: doc.page.width - MARGINS.left - MARGINS.right,
       align: 'left',
       lineBreak: false,
     });
-    doc.text(
-      `${t.page} ${i + 1} ${t.of} ${range.count}`,
-      MARGINS.left,
-      bottomY,
-      {
-        width: doc.page.width - MARGINS.left - MARGINS.right,
-        align: 'right',
-        lineBreak: false,
-      },
-    );
+    doc.text(`${t.page} ${i + 1} ${t.of} ${range.count}`, MARGINS.left, bottomY, {
+      width: doc.page.width - MARGINS.left - MARGINS.right,
+      align: 'right',
+      lineBreak: false,
+    });
+
+    doc.page.margins.bottom = originalBottom;
   }
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function sectionHeader(doc: PDFKit.PDFDocument, title: string) {
-  ensureSpace(doc, 40);
+  ensureSpace(doc, 80);
+  doc.x = MARGINS.left;
   doc.moveDown(0.3);
-  doc.font('Helvetica-Bold').fontSize(13).fillColor(COLORS.primary).text(title);
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(13)
+    .fillColor(COLORS.primary)
+    .text(title, MARGINS.left, doc.y, { width: contentWidth(doc) });
   doc
     .moveTo(MARGINS.left, doc.y)
     .lineTo(doc.page.width - MARGINS.right, doc.y)
     .strokeColor(COLORS.border)
     .stroke();
   doc.moveDown(0.5);
+}
+
+function contentWidth(doc: PDFKit.PDFDocument): number {
+  return doc.page.width - MARGINS.left - MARGINS.right;
+}
+
+function fit(doc: PDFKit.PDFDocument, text: string, width: number): string {
+  if (doc.widthOfString(text) <= width) return text;
+
+  let truncated = text;
+  while (truncated.length > 1 && doc.widthOfString(`${truncated}…`) > width) {
+    truncated = truncated.slice(0, -1);
+  }
+  return `${truncated.trimEnd()}…`;
+}
+
+function cell(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  align: 'left' | 'right' = 'left',
+) {
+  doc.text(fit(doc, text, width), x, y, { width, align, lineBreak: false });
 }
 
 function tableHeader(
@@ -531,10 +586,7 @@ function tableHeader(
   const y = doc.y;
   doc.font('Helvetica-Bold').fontSize(8).fillColor(COLORS.muted);
   for (const c of cols) {
-    doc.text(c.label.toUpperCase(), c.x, y, {
-      width: c.width,
-      align: c.align ?? 'left',
-    });
+    cell(doc, c.label.toUpperCase(), c.x, y, c.width, c.align ?? 'left');
   }
   doc.y = y + 14;
   doc

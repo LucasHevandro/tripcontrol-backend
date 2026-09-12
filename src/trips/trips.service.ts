@@ -2,22 +2,28 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { TripStatus } from '../generated/prisma/enums';
 import { BalanceCalculatorService } from '../finances/balance.service';
+import { hasNotStarted, suggestTripStatus } from './trip-status.util';
+import {
+  APP_TIME_ZONE,
+  formatDateOnly,
+  todayRangeUtc,
+} from '../common/date.util';
 
 @Injectable()
 export class TripsService {
   constructor(
     private prisma: PrismaService,
     private balanceCalc: BalanceCalculatorService,
-  ) {}
+  ) { }
 
   // ─── Listar viagens do usuário ────────────────────────────────────────────
-
   async findAll(userId: string) {
     const participations = await this.prisma.tripParticipant.findMany({
       where: { userId },
@@ -80,7 +86,6 @@ export class TripsService {
   }
 
   // ─── Criar viagem ─────────────────────────────────────────────────────────
-
   async create(userId: string, dto: CreateTripDto) {
     const trip = await this.prisma.trip.create({
       data: {
@@ -116,7 +121,6 @@ export class TripsService {
   }
 
   // ─── Buscar uma viagem ────────────────────────────────────────────────────
-
   async findOne(userId: string, tripId: string) {
     const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
@@ -139,7 +143,6 @@ export class TripsService {
   }
 
   // ─── Dashboard ────────────────────────────────────────────────────────────
-
   async getDashboard(userId: string, tripId: string) {
     await this.assertParticipant(userId, tripId);
 
@@ -160,10 +163,7 @@ export class TripsService {
         },
         activities: {
           where: {
-            date: {
-              gte: this.startOfDay(new Date()),
-              lte: this.endOfDay(new Date()),
-            },
+            date: todayRangeUtc(),
           },
           orderBy: { startTime: 'asc' },
         },
@@ -207,6 +207,16 @@ export class TripsService {
       hasExpenses: trip._count.expenses > 0,
     };
 
+    const statusSuggestion = suggestTripStatus(
+      trip.status,
+      trip.startDate,
+      trip.endDate,
+    );
+
+    const isOrganizer = trip.participants.some(
+      (p) => p.userId === userId && p.role === 'ORGANIZER',
+    );
+
     return {
       trip: {
         id: trip.id,
@@ -215,6 +225,8 @@ export class TripsService {
         startDate: trip.startDate,
         endDate: trip.endDate,
         status: trip.status,
+        statusSuggestion,
+        isOrganizer,
         participantCount: trip.participants.length,
       },
       totalSpent,
@@ -231,30 +243,20 @@ export class TripsService {
         paidByName: e.paidBy.name,
         paidByParticipantId: e.paidById,
         amount: Number(e.amount),
-        date: e.date.toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-        }),
+        date: formatDateOnly(e.date, { day: '2-digit', month: '2-digit' }),
       })),
-      todayLabel: new Date().toLocaleDateString('pt-BR', {
+      todayLabel: new Intl.DateTimeFormat('pt-BR', {
         weekday: 'short',
         day: '2-digit',
         month: 'short',
-      }),
-      todayActivities: trip.activities.map((a) => ({
-        id: a.id,
-        time: a.startTime,
-        title: a.title,
-        location: a.location ?? '',
-        status: a.status.toLowerCase(),
-      })),
+        timeZone: APP_TIME_ZONE,
+      }).format(new Date()),
       participants: participantsWithBalance,
       newTripStatus,
     };
   }
 
   // ─── Atualizar viagem ─────────────────────────────────────────────────────
-
   async update(userId: string, tripId: string, dto: UpdateTripDto) {
     await this.assertOrganizer(userId, tripId);
 
@@ -270,9 +272,20 @@ export class TripsService {
   }
 
   // ─── Deletar viagem ───────────────────────────────────────────────────────
-
   async remove(userId: string, tripId: string) {
     await this.assertOrganizer(userId, tripId);
+
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { startDate: true },
+    });
+    if (!trip) throw new NotFoundException('Viagem não encontrada');
+
+    if (!hasNotStarted(trip.startDate)) {
+      throw new BadRequestException(
+        'Só é possível excluir viagens que ainda não começaram',
+      );
+    }
 
     await this.prisma.trip.delete({ where: { id: tripId } });
     return { message: 'Viagem removida com sucesso' };
@@ -296,18 +309,6 @@ export class TripsService {
       );
     }
     return participation;
-  }
-
-  private startOfDay(date: Date) {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-
-  private endOfDay(date: Date) {
-    const d = new Date(date);
-    d.setHours(23, 59, 59, 999);
-    return d;
   }
 
   private async calculateParticipantBalances(tripId: string) {

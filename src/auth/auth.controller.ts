@@ -25,7 +25,7 @@ import { GoogleLoginDto } from './dto/google-login.dto';
 import { JwtGuard } from './guards/jwt.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { ForgotPasswordDto } from './dto/forgotpassword.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('Auth')

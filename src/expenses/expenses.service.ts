@@ -18,6 +18,7 @@ import {
   type FileStorage,
 } from '../storage/file-storage.interface';
 import { UploadValidationService } from '../storage/upload-validation.service';
+import { formatDateOnly } from '../common/date.util';
 
 @Injectable()
 export class ExpensesService {
@@ -27,7 +28,7 @@ export class ExpensesService {
     private balanceCalc: BalanceCalculatorService,
     private uploadValidation: UploadValidationService,
     @Inject(FILE_STORAGE) private storage: FileStorage,
-  ) {}
+  ) { }
 
   // ─── Listar despesas ──────────────────────────────────────────────────────
   async findAll(
@@ -82,10 +83,7 @@ export class ExpensesService {
         description: e.description,
         category: e.category,
         amount: Number(e.amount),
-        date: e.date.toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-        }),
+        date: formatDateOnly(e.date, { day: '2-digit', month: '2-digit' }),
         paidById: e.paidById,
         paidByName: e.paidBy.name,
         splitType: e.splitType,
@@ -175,7 +173,7 @@ export class ExpensesService {
 
     return {
       tripName: trip.name,
-      tripPeriod: trip.startDate.toLocaleDateString('pt-BR', {
+      tripPeriod: formatDateOnly(trip.startDate, {
         month: 'short',
         year: 'numeric',
       }),
@@ -245,10 +243,7 @@ export class ExpensesService {
       description: expense.description,
       category: expense.category,
       amount: Number(expense.amount),
-      date: expense.date.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-      }),
+      date: formatDateOnly(expense.date, { day: '2-digit', month: '2-digit' }),
       paidByName: expense.paidBy.name,
       splitType: expense.splitType,
       splits: expense.splits.map((s) => ({
@@ -281,9 +276,9 @@ export class ExpensesService {
     const participants =
       shouldRebuildSplits || paidById
         ? await this.prisma.tripParticipant.findMany({
-            where: { tripId },
-            select: { id: true, userId: true, sponsorId: true },
-          })
+          where: { tripId },
+          select: { id: true, userId: true, sponsorId: true },
+        })
         : [];
 
     if (
@@ -295,11 +290,11 @@ export class ExpensesService {
 
     const splits = shouldRebuildSplits
       ? buildExpenseSplits({
-          amount: nextAmount,
-          splitType: nextSplitType,
-          splitParticipants,
-          tripParticipants: participants,
-        })
+        amount: nextAmount,
+        splitType: nextSplitType,
+        splitParticipants,
+        tripParticipants: participants,
+      })
       : undefined;
 
     const updated = await this.prisma.$transaction(async (tx) => {
