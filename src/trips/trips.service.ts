@@ -245,6 +245,13 @@ export class TripsService {
         amount: Number(e.amount),
         date: formatDateOnly(e.date, { day: '2-digit', month: '2-digit' }),
       })),
+      todayActivities: trip.activities.map((a) => ({
+        id: a.id,
+        time: a.startTime,
+        title: a.title,
+        location: a.location ?? '',
+        status: a.status.toLowerCase() as 'upcoming' | 'current' | 'completed',
+      })),
       todayLabel: new Intl.DateTimeFormat('pt-BR', {
         weekday: 'short',
         day: '2-digit',
